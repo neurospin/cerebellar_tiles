@@ -1,0 +1,6 @@
+# Remove heavy sif files
+containers/*.sif
+
+# Don't commit results
+
+results/*
