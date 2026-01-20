@@ -47,7 +47,7 @@ OUTPUT_FOLDER = config["output_folder"]
 # ----------------------------------------------
 
 rule all:
-	input: 
+	input:
         # Cropped images
 	
         expand(f"{OUTPUT_FOLDER}/{{subject}}/cropped/{{subject}}_crop_{{substructure}}_t1w.nii.gz", subject=SUBJECTS, substructure=SUBSTRUCTURES.keys()) # Cropped T1w volume for visualisation
@@ -73,7 +73,7 @@ rule acapulco_segmentation :
 
 	container : acapulco-cpu
 
-	input : 
+	input :
 		raw_nifti = f"{RAW_DATA}/{{subject}}.nii.gz"
 
 	params :
@@ -93,7 +93,7 @@ rule acapulco_segmentation :
 	"""
 
 rule copy_mask_and_transform :
-	input : 
+	input :
 		file_ok = f"{OUTPUT_FOLDER}/{{subject}}/.seg_done"
 		acapulco_temp = f"{OUTPUT_FOLDER}/{{subject}}/acapulco"
 
