@@ -1,1 +1,43 @@
-subject_file : "subjects.txt"
+# ------------------------------------------
+# Pipeline parameters
+# ------------------------------------------
+
+## Inputs
+subject_list : "subjects.txt" # Subject list file
+raw_data : "absolute_path_to_data"
+data_structure : "relative_path_of_individual_subject_nifti"
+
+## Results
+output_folder : "path_to_save_outputs"
+
+## Dataset 
+dataset_name : "UKBiobank"
+
+# ------------------------------------------
+# Pipeline parameters
+# ------------------------------------------
+
+## Dataset
+dataset :
+	name : "UKBiobank"
+	version : "too_add"
+
+segmentation_params : 
+        method : "kki"
+
+## VipGeometry parameters
+vipgeometry_settings : 
+	method : "mc"
+	sigma : "1" 
+
+## Mean curvature thresholds
+thresholds_mean_curvature : 
+	min : "-600" # Most of the time all the values are above this value
+	max : "-0.3967" # Qualitative
+
+## Substructures' masks paths
+substructures_masks : #Can take a list of substructure's mask
+	vermis_mask : "path_to_the_vermis_mask"
+
+## 
+
