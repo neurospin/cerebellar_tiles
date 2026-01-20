@@ -90,3 +90,25 @@ rule acapulco_segmentation :
 	mkdir -p {output_directory}
 	acapulco.sh -i {tmp_nii} -o {output_directory} -m {params.method}
 	touch .seg_done
+	"""
+
+rule copy_mask_and_transform :
+	input : 
+		file_ok = f"{OUTPUT_FOLDER}/{{subject}}/.seg_done"
+		acapulco_temp = f"{OUTPUT_FOLDER}/{{subject}}/acapulco"
+
+	output :
+	masks = [
+	f"{OUTPUT_FOLDER}/{{subject}}/masks/{{subject}}_n4_affine.txt",
+	f"{OUTPUT_FOLDER}/{{subject}}/masks/{{subject}}_n4_inv-affine.txt",
+	f"{OUTPUT_FOLDER}/{{subject}}/masks/{{subject}}_n4_mni_seg_post.nii.gz",
+	f"{OUTPUT_FOLDER}/{{subject}}/masks/{{subject}}_n4_mni_seg_post_inverse.nii.gz",
+	]
+
+	shell :
+	"""
+	cp {acapulco_temp}/{subject}_n4_affine.txt {output.masks[0]}
+	cp {acapulco_temp}/{subject}_n4_inv-affine.txt {output.masks[1]} 
+	cp {acapulco_temp}/{subject}_n4_mni_seg_post.nii.gz {output.masks[2]}
+	cp {acapulco_temp}/{subject}_n4_mni_seg_post_inverse.nii.gz {output.masks[3]}
+	"""
