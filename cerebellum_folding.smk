@@ -63,3 +63,30 @@ rule all:
         expand(f"{OUTPUT_FOLDER}/{{subject}}/masks/{{subject}}_binary_mask_cerebellum.txt", subject=SUBJECTS)
         expand(f"{OUTPUT_FOLDER}/{{subject}}/masks/{{subject}}_{{substructure}}_mask.txt", subject=SUBJECTS, substructure=SUBSTRUCTURES.keys())
 
+
+# ----------------------------------------------
+#  All the rules
+# ----------------------------------------------
+
+
+rule acapulco_segmentation :
+
+	container : acapulco-cpu
+
+	input : 
+		raw_nifti = f"{RAW_DATA}/{{subject}}.nii.gz"
+
+	params :
+		method = config["segmentation_params"]["method"]
+
+	output :
+		output_directory = temp(directory(f"{OUTPUT_FOLDER}/{{subject}}/acapulco"))
+		tmp_nii = temp(f"{OUTPUT_FOLDER}/{{subject}}/{{subject}}.nii")
+		file_ok = f"{OUTPUT_FOLDER}/{{subject}}/.seg_done"
+
+	shell :
+	"""
+	gunzip -c {raw_nifti} > {tmp_nii}
+	mkdir -p {output_directory}
+	acapulco.sh -i {tmp_nii} -o {output_directory} -m {params.method}
+	touch .seg_done
