@@ -54,7 +54,7 @@ rule all:
         expand(f"{OUTPUT_FOLDER}/{{subject}}/cropped/{{subject}}_crop_thresholded_{{substructure}}_mc.nii.gz", subject=SUBJECTS, substructure=SUBSTRUCTURES.keys()) #Final volume as nifti
         expand(f"{OUTPUT_FOLDER}/{{subject}}/{{subject}}_crop_{{substructure}}.npy", subject=SUBJECTS, substructure=SUBSTRUCTURES.keys()) #Finale volume
 
-        # Masksf and transformation matrixes{diw
+        # Mask and transformation matrixes
 
         expand(f"{OUTPUT_FOLDER}/{{subject}}/masks/{{subject}}_n4_mni_seg_post.nii.gz", subject=SUBJECTS)
         expand(f"{OUTPUT_FOLDER}/{{subject}}/masks/{{subject}}_n4_affine.txt", subject=SUBJECTS)
@@ -111,4 +111,36 @@ rule copy_mask_and_transform :
 	cp {acapulco_temp}/{subject}_n4_inv-affine.txt {output.masks[1]} 
 	cp {acapulco_temp}/{subject}_n4_mni_seg_post.nii.gz {output.masks[2]}
 	cp {acapulco_temp}/{subject}_n4_mni_seg_post_inverse.nii.gz {output.masks[3]}
+	"""
+
+
+rule resampling_mni_registration_t1w :
+	input :
+		raw_nifti = f"{RAW_DATA}/{{subject}}.nii.gz"
+		transf_matrix_acapulco = f"{OUTPUT_FOLDER}/{{subject}}/masks/{{subject}}_n4_affine.txt"
+
+	output :
+		resampled_t1w_mni = f"{OUTPUT_FOLDER}/{{subject}}/mni/{{subject}}_t1w_MNI_0-5iso.nii.gz"
+
+	shell :
+	"""
+	module load {config["morphologist"]}
+
+	python {workflow.basedir}/script/resampling.py --verbose --acapulco --input {raw_nifti} --output {resampled_t1w_mni} --transform_mask {transf_matrix_acapulco}
+	"""
+
+
+rule resampling_mni_registration_acapulco_mask :
+	input :
+		mask_native = f"{OUTPUT_FOLDER}/{{subject}}/masks/{{subject}}_n4_mni_seg_post_inverse.nii.gz"
+		transf_matrix_acapulco = f"{OUTPUT_FOLDER}/{{subject}}/masks/{{subject}}_n4_affine.txt"
+
+	output :
+		resampled_mask_mni = "{{subject}}/mni/{{subject}}_seg_mni_0-5iso.nii.gz"
+
+	shell :
+	"""
+	module load {config["morphologist"]}
+
+	python {workflow.basedir}/script/resampling.py --verbose --acapulco --mask --input {mask_native} --output {resampled_mask_mni} --transform_mask {transf_matrix_acapulco}
 	"""
