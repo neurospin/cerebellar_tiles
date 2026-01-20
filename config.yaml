@@ -2,6 +2,9 @@
 # Pipeline parameters
 # ------------------------------------------
 
+# Module names TGCC
+morphologist : "morphologist/5.2"
+
 ## Inputs
 subject_list : "subjects.txt" # Subject list file
 raw_data : "absolute_path_to_data"
