@@ -42,7 +42,7 @@ For those files the pipeline's outputs are :
 ├── README.md
 ├── results
 │   └── <subject>
-│       ├── acapulco
+│       ├── masks
 │       ├── cropped
 │       ├── masked
 │       └── mni
@@ -77,7 +77,7 @@ Each rule is used to manage an unique subject.
 - T1w nifti file : `<subject>.nii.gz`
 
 **Output** :
-- Acapulco folder ([structure here](#structure-acapulco-folder-after-running-the-individual-segmentation)) containing the processed files : `<subject>/acapulco/`
+- Acapulco folder ([structure here](#structure-acapulco-folder-after-running-the-individual-segmentation)) containing the processed files : `<subject>/masks/`
 - "Done" file to ensure that the rule is applied to the end (temporary file) : `<subject>/.seg_done`
 
 **What is done**:
@@ -92,10 +92,10 @@ Segmentation using Acapulco segmentation tool
 - "Done" file to ensure that the rule is applied to the end (temporary file) : `<subject>/.seg_done`
 
 **Output** :
-- Tranformation matrix native to MNI : `<subject>/acapulco/<subject>_n4_affine.txt`
-- Tranformation matrix MNI to native : `<subject>/acapulco/<subject>_n4_inv-affine.txt`
-- Lobule segmentation of the cerebellum in MNI : `<subject>/acapulco/<subject>_n4_mni_seg_post.nii.gz`
-- Lobule segmentation of the cerebellum in native space : `<subject>/acapulco/<subject>_n4_mni_seg_post_inv.nii.gz`
+- Tranformation matrix native to MNI : `<subject>/masks/<subject>_n4_affine.txt`
+- Tranformation matrix MNI to native : `<subject>/masks/<subject>_n4_inv-affine.txt`
+- Lobule segmentation of the cerebellum in MNI : `<subject>/masks/<subject>_n4_mni_seg_post.nii.gz`
+- Lobule segmentation of the cerebellum in native space : `<subject>/masks/<subject>_n4_mni_seg_post_inv.nii.gz`
 
 **What is done**:
 
@@ -108,10 +108,10 @@ Once the segmentation in done, interesting files are copied to keep them and cle
 
 **Input** : 
 - T1w nifti file : `<subject>.nii.gz`
-- Tranformation matrix to MNI : `<subject>/acapulco/<subject>_n4_affine.txt`
+- Tranformation matrix to MNI : `<subject>/masks/<subject>_n4_affine.txt`
 
 **Output** :
-- Resampled T1w : `<subject>_t1w_MNI_0-5iso.nii.gz`
+- Resampled T1w : `<subject>/mni/<subject>_t1w_MNI_0-5iso.nii.gz`
 
 **What is done**:
 
@@ -122,10 +122,10 @@ Registration and resampling to 0.5mm isotropi of the T1w MRI to MNI using transf
 **Container** : Morphologist
 
 **Input** : 
-- Resampled T1w : `<subject>_t1w_MNI_0-5iso.nii.gz`
+- Resampled T1w : `<subject>/mni/<subject>_t1w_MNI_0-5iso.nii.gz`
 
 **Output** :
-- Mean curvature of T1w image :  `<subject>_mc_MNI_0-5iso.nii.gz`
+- Mean curvature of T1w image :  `<subject>/mni/<subject>_mc_MNI_0-5iso.nii.gz`
 
 **What is done**: Computation of the mean curvature of the images using `VipGeometry` tool from morphologist
 
@@ -134,10 +134,10 @@ Registration and resampling to 0.5mm isotropi of the T1w MRI to MNI using transf
 **Container** : Morphologist
 
 **Input** : 
-- Mean curvature of T1w image :  `<subject>_mc_MNI_0-5iso.nii.gz`
+- Mean curvature of T1w image :  `<subject>/mni/<subject>_mc_MNI_0-5iso.nii.gz`
 
 **Output** :
-- Binary volume of thersholded mean curvature of T1w image :  `<subject>_thresh_mc_MNI_0-5iso.nii.gz`
+- Binary volume of thersholded mean curvature of T1w image :  `<subject>/mni/<subject>_thresh_mc_MNI_0-5iso.nii.gz`
 
 **What is done**: Thresholding of the mean curvature file to obtain a binary volume of the white matter
 
@@ -149,11 +149,11 @@ Registration and resampling to 0.5mm isotropi of the T1w MRI to MNI using transf
 **Container** : Morphologist
 
 **Input** : 
-- Lobule segmentation of the cerebellum in MNI : `<subject>/acapulco/<subject>_n4_mni_seg_post.nii.gz`
-- Tranformation matrix to MNI : `<subject>/acapulco/<subject>_n4_affine.txt` 
+- Lobule segmentation of the cerebellum in MNI : `<subject>/masks/<subject>_n4_mni_seg_post.nii.gz`
+- Tranformation matrix to MNI : `<subject>/masks/<subject>_n4_affine.txt` 
 
 **Output** :
-- Resampled mask (registered in MNI) to 0.5mm isotropic : `<subject>_seg_mni_O-5iso.nii.gz`
+- Resampled mask (registered in MNI) to 0.5mm isotropic : `<subject>/masks/<subject>_seg_mni_O-5iso.nii.gz`
 
 **What is done**: 
 
@@ -164,10 +164,10 @@ Resampling mask to 0.5mm isotropic
 **Container** : Morphologist
 
 **Input** : 
-- Resampled mask (registered in MNI) to 0.5mm isotropic : `<subject>_seg_mni_O-5iso.nii.gz`
+- Resampled mask (registered in MNI) to 0.5mm isotropic : `<subject>/masks/<subject>_seg_mni_O-5iso.nii.gz`
 
 **Output** :
-- Binary mask of the whole cerebellum : `<subject>_binary_mask_cerebellum.nii.gz`
+- Binary mask of the whole cerebellum : `<subject>/masks/<subject>_binary_mask_cerebellum.nii.gz`
 
 **What is done**:
 
@@ -178,11 +178,11 @@ Merging all the segmentation of the lobule into a unique cerebellum mask (binary
 **Container** : Morphologist
 
 **Input** : 
-- Binary mask of the whole cerebellum : `<subject>_binary_mask_cerebellum.nii.gz`
-- Additionnal mask of substructure (e.g. vermis mask from probability map) **/!\\ The mask should be registered to the right space** : `<subject>_<substructure>_mask.nii.gz`
+- Binary mask of the whole cerebellum : `<subject>/masks/<subject>_binary_mask_cerebellum.nii.gz`
+- Additionnal mask of substructure (e.g. vermis mask from probability map) **/!\\ The mask should be registered to the right space with a spatial resolution of 0.5mm iso** : `<subject>_<substructure>_mask.nii.gz`
 
 **Output** :
-- Final mask of the target structure (substructure or entire cerebellum) : `<subject>_final_mask.nii.gz`
+- Final mask of the target structure (substructure or entire cerebellum) : `<subject>/masks/<subject>_final_mask.nii.gz`
 
 **What is done**:
 
@@ -193,13 +193,13 @@ Merging all the segmentation of the lobule into a unique cerebellum mask (binary
 **Container** : Morphologist
 
 **Input** : 
-- Binary volume of thersholded mean curvature of T1w image :  `<subject>_thresh_mc_MNI_0-5iso.nii.gz`
-- Resampled T1w : `<subject>_t1w_MNI_0-5iso.nii.gz`
-- Final mask of the target structure (substructure or entire cerebellum) : `<subject>_final_mask.nii.gz`
+- Binary volume of thersholded mean curvature of T1w image :  `<subject>/mni/<subject>_thresh_mc_MNI_0-5iso.nii.gz`
+- Resampled T1w : `<subject>/mni/<subject>_t1w_MNI_0-5iso.nii.gz`
+- Final mask of the target structure (substructure or entire cerebellum) : `<subject>/masks/<subject>_final_mask.nii.gz`
 
 **Output** :
-- Masked T1w MRI : `<subject>_masked_t1w.nii.gz`
-- Masked Thresholded mean curvature : `<subject>_masked_thresholded_mc.nii.gz`
+- Masked T1w MRI : `<subject>/masked/<subject>_masked_t1w.nii.gz`
+- Masked Thresholded mean curvature : `<subject>/masked/<subject>_masked_thresholded_mc.nii.gz`
 
 
 **What is done**:
@@ -212,15 +212,15 @@ NB : The shape of the volume is still the same, crops aren't done in this step
 **Container** : Morphologist
 
 **Input** : 
-- Masked T1w MRI : `<subject>_masked_<substructure>_t1w.nii.gz`
-- Masked Thresholded mean curvature : `<subject>_masked_<substructure>_thresholded_mc.nii.gz`
-- Additionnal mask of substructure (e.g. vermis mask from probability map) **/!\\ The mask should be registered to the right space** : `<subject>_<substructure>_mask.nii.gz`
+- Masked T1w MRI : `<subject>/masked/<subject>_masked_<substructure>_t1w.nii.gz`
+- Masked Thresholded mean curvature : `<subject>/masked/<subject>_masked_<substructure>_thresholded_mc.nii.gz`
+- Additionnal mask of substructure (e.g. vermis mask from probability map) **/!\\ The mask should be registered to the right space** : `<subject>/masks/<subject>_<substructure>_mask.nii.gz`
 
 
 **Output** :
-- Cropped T1w MRI :  `<subject>_crop_<substructure>_t1w.nii.gz`
-- Cropped Thresholded mean curvature :  `<subject>_crop_thresholded_<substructure>_mc.nii.gz`
-- Numpy of the thresholded mean curvature :  `<subject>_crop_<substructure>_t1w.npy`
+- Cropped T1w MRI :  `<subject>/cropped/<subject>_crop_<substructure>_t1w.nii.gz`
+- Cropped Thresholded mean curvature :  `<subject>/cropped/<subject>_crop_thresholded_<substructure>_mc.nii.gz`
+- Numpy of the thresholded mean curvature :  `<subject>/<subject>_crop_<substructure>.npy`
 
 **What is done**:
 
