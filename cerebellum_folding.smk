@@ -144,3 +144,17 @@ rule resampling_mni_registration_acapulco_mask :
 
 	python {workflow.basedir}/script/resampling.py --verbose --acapulco --mask --input {mask_native} --output {resampled_mask_mni} --transform_mask {transf_matrix_acapulco}
 	"""
+
+rule compute_mean_curvature :
+	input :
+		t1w_mni = "{OUTPUT_FOLDER}/{{subject}}/mni/{{subject}}_t1w_MNI_0-5iso.nii.gz"
+
+	output :
+		 mean_curv_mni = "{OUTPUT_FOLDER}/{{subject}}/mni/{{subject}}_mc_MNI_0-5iso.nii.gz"
+
+	shell :
+	"""
+	module load {config["morphologist"]}
+
+	VipGeometry -m {config["vipgeometry_settings"]["method"]} -s {config["vipgeometry_settings"]["sigma"]} -i {t1w_mni} -o {mean_curv_mni}
+	"""
