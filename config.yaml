@@ -35,7 +35,7 @@ vipgeometry_settings :
 
 ## Mean curvature thresholds
 thresholds_mean_curvature : 
-	min : "-600" # Most of the time all the values are above this value
+	min : "-10" # Most of the time all the values are above this value
 	max : "-0.3967" # Qualitative
 
 ## Substructures' masks paths
