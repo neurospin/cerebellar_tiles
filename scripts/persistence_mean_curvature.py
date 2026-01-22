@@ -44,6 +44,7 @@ parser.add_argument("-v", "--verbose", action="store_true", help="Verbose mode")
 parser.add_argument("--save_dict", action="store_true", help="Verbose mode")
 parser.add_argument("--input", required=True, help="Input nifti path")
 parser.add_argument("--output", required=True, help="Output folder path")
+parser.add_argument("--cerebellum_mask", required=True, help="TEMPORARY nifti file of the cerebellum mask")
 parser.add_argument("--min_quantile", required=True, help="Minimum quantile", type=float)
 parser.add_argument("--max_quantile", required=True, help="Maximum quantile", type=float)
 parser.add_argument("--sigmas", required=True, nargs="+", type=float, help="List of sigmas used for the multi-scale mean curvature computation")
@@ -54,9 +55,13 @@ args = parser.parse_args()
 mapping_sigma = parse_sigma(args.sigmas)
 print(f"mapping sigma : {mapping_sigma}")
 
-# 1. retrieve the resampled volume to ICBM2009 and its header : to add informations to new volumes
+# Retrieve the resampled volume to ICBM2009 and its header : to add informations to new volumes
 resampled_vol = aims.read(args.input)
 header_input = resampled_vol.header()
+
+# Retrieve cerebellum mask
+mask_cerebellum = aims.read(args.cerebellum_mask).np.copy()
+bin_cerebellum = np.where(mask_cerebellum != 0, 1, 0).astype(bool)
 
 # Steps
 # Compute mean curvature for each sigma
@@ -90,7 +95,7 @@ for sigma, np_vol in dict_mean_curv.items() :
 print(" Quantile for each sigma values... \n")
 dict_quantiles = dict()
 for sigma, np_vol in dict_scaled_mc.items():
-    mc_neg_val = np_vol[neg_masks[sigma]]
+    mc_neg_val = np_vol[neg_masks[sigma] & bin_cerebellum]
     dict_quantiles[sigma] = np.quantile(mc_neg_val, [args.min_quantile, args.max_quantile])
 print("Quantiles \n", dict_quantiles)
 pd.DataFrame(dict_quantiles).to_csv("quantiles.csv")
