@@ -24,7 +24,7 @@ if args.acapulco:
         lines = f.readlines()
     lines = [[str(x.strip()) for x in y.split()] for y in lines]
     if args.verbose : 
-	print(lines)
+        print(lines)
     mni_to_sb = aims.AffineTransformation3d()
     mni_to_sb.affine()[:, :, 0, 0] = lines
     sbi = vol.header()['referentials'].index(
@@ -68,3 +68,4 @@ resampled = resampler.doit(
 
 if args.verbose : 
     print(f"Saving resampled at {args.output}")
+aims.write(resampled, args.output)
