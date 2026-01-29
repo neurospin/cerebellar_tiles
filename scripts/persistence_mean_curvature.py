@@ -42,8 +42,10 @@ def parse_sigma(list_sigma):
 parser = argparse.ArgumentParser()
 parser.add_argument("-v", "--verbose", action="store_true", help="Verbose mode")
 parser.add_argument("--input", required=True, help="Input nifti path")
-parser.add_argument("--output", required=True, help="Output folder path")
+parser.add_argument("--output_persistence", required=True, help="Persistence nifti saving path")
+parser.add_argument("--output_thresholded", required=True, help="Thresholded persistence nifti saving path")
 parser.add_argument("--cerebellum_mask", required=True, help="TEMPORARY nifti file of the cerebellum mask")
+parser.add_argument("--threshold_persistence", required=True, help="Threshold of the persistence band")
 parser.add_argument("--min_quantile", required=True, help="Minimum quantile", type=float)
 parser.add_argument("--max_quantile", required=True, help="Maximum quantile", type=float)
 parser.add_argument("--sigmas", required=True, nargs="+", type=float, help="List of sigmas used for the multi-scale mean curvature computation")
@@ -125,7 +127,9 @@ all_scaled_mc = np.stack(list(dict_scaled_mc.values()), axis=0)
 persis_band = np.sum(all_band, axis= 0)
 persis_weighted = np.sum(all_scaled_mc, axis= 0)
 
+# Thresholding persistence
+thresholded_persistence_band = np.where(persis_band >= args.threshold_persistence, 1, 0)
+
 # Saving persistence volume
-
-save_numpy_nifti(persis_band, args.output, header=header_input)
-
+save_numpy_nifti(persis_band, args.output_persistence, header=header_input)
+save_numpy_nifti(thresholded_persistence_band, args.output_thresholded, header=header_input)
