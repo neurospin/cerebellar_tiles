@@ -41,7 +41,6 @@ def parse_sigma(list_sigma):
 # 0. Parsing arguments
 parser = argparse.ArgumentParser()
 parser.add_argument("-v", "--verbose", action="store_true", help="Verbose mode")
-# parser.add_argument("--save_dict", action="store_true", help="Verbose mode")
 parser.add_argument("--input", required=True, help="Input nifti path")
 parser.add_argument("--output", required=True, help="Output folder path")
 parser.add_argument("--cerebellum_mask", required=True, help="TEMPORARY nifti file of the cerebellum mask")
@@ -128,11 +127,5 @@ persis_weighted = np.sum(all_scaled_mc, axis= 0)
 
 # Saving persistence volume
 
-if args.save_dict : 
-    # print("Saving scaled values...")
-    # save_dict_np_vol(dict_scaled_mc, header_input, "sub_scaled_", mapping_sigma)
-
-    print("Saving end bands...")
-    save_dict_np_vol(dict_band, header_input, "sub_band_", mapping_sigma)
 save_numpy_nifti(persis_band, args.output, header=header_input)
 
