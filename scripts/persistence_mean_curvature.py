@@ -53,7 +53,8 @@ args = parser.parse_args()
 
 # Retrieving each sigmas
 mapping_sigma = parse_sigma(args.sigmas)
-print(f"mapping sigma : {mapping_sigma}")
+if args.verbose :
+    print(f"mapping sigma : {mapping_sigma}")
 
 # Retrieve the resampled volume to ICBM2009 and its header : to add informations to new volumes
 resampled_vol = aims.read(args.input)
@@ -65,15 +66,18 @@ bin_cerebellum = np.where(mask_cerebellum != 0, 1, 0).astype(bool)
 
 # Steps
 # Compute mean curvature for each sigma
-print("Computing mean curvature \n")
+if args.verbose :
+    print("Computing mean curvature \n")
 mean_curvature_path = lambda x : f"sub_mean-curv_{x}.nii.gz"
 
 dict_mean_curv = dict()
 for sigma, path_end in mapping_sigma.items() : 
     full_path = mean_curvature_path(path_end)
-    print(f"Computing mean curvature of {args.input} with sigma : {sigma}")
+    if args.verbose :
+        print(f"Computing mean curvature of {args.input} with sigma : {sigma}")
     compute_mean_cuvature(args.input, full_path, sigma)
-    print(f"Success of sigma : {sigma}")
+    if args.verbose :
+        print(f"Success of sigma : {sigma}")
     np_vol = aims.read(full_path).np.copy()
     dict_mean_curv[sigma] = np_vol
     os.remove(full_path)
@@ -81,33 +85,41 @@ for sigma, path_end in mapping_sigma.items() :
 
 
 # Retrieve mask of negative values (i.e. White matter values)
-print("Retrieving mask negative values... \n")
+if args.verbose :
+    print("Retrieving mask negative values... \n")
 neg_masks = dict()
 for sigma, np_vol in dict_mean_curv.items() :
     neg_masks[sigma] = (np_vol < 0)
 
 # Scaling mean curvature according to sigma 
-print("Scaling mean curvature according to sigma... \n")
+if args.verbose :
+    print("Scaling mean curvature according to sigma... \n")
 dict_scaled_mc = dict()
 for sigma, np_vol in dict_mean_curv.items() :
     dict_scaled_mc[sigma] = sigma * np_vol
 
 # Retrieving individual quantiles : 
-print(" Quantile for each sigma values... \n")
+if args.verbose :
+    print(" Quantile for each sigma values... \n")
 dict_quantiles = dict()
 for sigma, np_vol in dict_scaled_mc.items():
     mc_neg_val = np_vol[neg_masks[sigma] & bin_cerebellum]
     dict_quantiles[sigma] = np.quantile(mc_neg_val, [args.min_quantile, args.max_quantile])
-print("Quantiles \n", dict_quantiles)
+if args.verbose :
+    print("Quantiles \n", dict_quantiles)
 pd.DataFrame(dict_quantiles).to_csv("quantiles.csv")
 
-print("\n Band computation... \n")
+# Retrieving bands
+if args.verbose :
+    print("\n Band computation... \n")
 dict_band = dict()
 for sigma, np_vol in dict_scaled_mc.items():
     band = neg_masks[sigma] & (np_vol >= dict_quantiles[sigma][0]) & (np_vol <= dict_quantiles[sigma][1])
     dict_band[sigma] = band
+
 # Computing persistence
-print("Computing persistence... \n")
+if args.verbose :
+    print("Computing persistence... \n")
 all_band = np.stack(list(dict_band.values()), axis=0)
 all_scaled_mc = np.stack(list(dict_scaled_mc.values()), axis=0)
 
