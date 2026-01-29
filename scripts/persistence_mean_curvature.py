@@ -41,7 +41,7 @@ def parse_sigma(list_sigma):
 # 0. Parsing arguments
 parser = argparse.ArgumentParser()
 parser.add_argument("-v", "--verbose", action="store_true", help="Verbose mode")
-parser.add_argument("--save_dict", action="store_true", help="Verbose mode")
+# parser.add_argument("--save_dict", action="store_true", help="Verbose mode")
 parser.add_argument("--input", required=True, help="Input nifti path")
 parser.add_argument("--output", required=True, help="Output folder path")
 parser.add_argument("--cerebellum_mask", required=True, help="TEMPORARY nifti file of the cerebellum mask")
@@ -77,6 +77,7 @@ for sigma, path_end in mapping_sigma.items() :
     np_vol = aims.read(full_path).np.copy()
     dict_mean_curv[sigma] = np_vol
     os.remove(full_path)
+    os.remove(full_path + ".minf")
 
 
 # Retrieve mask of negative values (i.e. White matter values)
