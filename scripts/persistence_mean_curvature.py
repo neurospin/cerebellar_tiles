@@ -115,8 +115,6 @@ persis_band = np.sum(all_band, axis= 0)
 persis_weighted = np.sum(all_scaled_mc, axis= 0)
 
 # Saving persistence volume
-save_numpy_nifti(persis_band, f"sub_persistence_band_q{args.min_quantile}_{args.max_quantile}.nii.gz", header=header_input)
-save_numpy_nifti(persis_weighted, "sub_persistence_weighted.nii.gz", header=header_input)
 
 if args.save_dict : 
     # print("Saving scaled values...")
@@ -124,4 +122,5 @@ if args.save_dict :
 
     print("Saving end bands...")
     save_dict_np_vol(dict_band, header_input, "sub_band_", mapping_sigma)
+save_numpy_nifti(persis_band, args.output, header=header_input)
 
