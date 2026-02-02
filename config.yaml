@@ -27,20 +27,17 @@ dataset :
 
 segmentation_params : 
         method : "kki"
-
-## VipGeometry parameters
-vipgeometry_settings : 
-	method : "mc"
-	sigma : "1" 
-
-## Mean curvature thresholds
-thresholds_mean_curvature : 
-	min : "-10" # Most of the time all the values are above this value
-	max : "-0.3967" # Qualitative
-
 ## Substructures' masks paths
 substructures_masks : #Can take a list of substructure's mask
 	vermis_mask : "path_to_the_vermis_mask"
 
-## 
+cerebellum_atlas_path_mask : "path_to_cerebellum_atlas_mask"
 
+dilatation_cerebellum_atlas_mask : 10 #voxels
+dilatation_substructure : 5 #voxels
+
+## Persistence settings : 
+
+sigmas : [1, 2, 3]
+min_quantile : 0.01
+max_quantile : 0.3
