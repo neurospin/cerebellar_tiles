@@ -30,17 +30,26 @@ import yaml
 
 configfile : "config.yaml"
 
-# Retrieving subjects list
-with open(config["subject_file"]) as f : 
-	SUBJECTS = [lines.strip() for line in f.readlines if line.strip()]
+# Global parameters
+RAW_DATA = config["raw_data"] # Raw data path (root of the file; e.g. folder/<subject_folder>/...)
+OUTPUT_FOLDER = config["output_folder"] # Output of the pipeline
+PLATFORM = config["execution"]
+SCRIPTS = lambda script : f"{workflow.basedir}/script/{script}"
+
+## Retrieving subjects list
+with open(config["subject_list"]) as f : 
+	SUBJECTS = [line.strip() for line in f.readlines() if line.strip()]
 
 SUBSTRUCTURES = config["substructures_masks"]
 
-# Raw data path (root of the file; e.g. folder/<subject_folder>/...)
-RAW_DATA = config["raw_data"]
 
-OUTPUT_FOLDER = config["output_folder"]
+# To adapt the environment to the machine we execute it on (TGCC or local)
 
+def morphologist_env() :
+	if PLATFORM == "tgcc" :
+		return f"module load {config['environments']['module_tgcc']} &&"
+	else :
+		return f"pixi run -e {config['environments']['pixi_env']}"
 
 # ----------------------------------------------
 # Rule all
@@ -48,23 +57,23 @@ OUTPUT_FOLDER = config["output_folder"]
 
 rule all:
 	input:
-		f"{OUTPUT_FOLDER}/{{subject}}/masks/{{subject}}_n4_affine.txt",
-		f"{OUTPUT_FOLDER}/{{subject}}/masks/{{subject}}_n4_inv-affine.txt",
-		f"{OUTPUT_FOLDER}/{{subject}}/masks/{{subject}}_n4_mni_seg_post.nii.gz",
-		f"{OUTPUT_FOLDER}/{{subject}}/masks/{{subject}}_n4_mni_seg_post_inverse.nii.gz",
-		f"{OUTPUT_FOLDER}/{{subject}}/masks/{{subject}}_seg_acapulco_mni.nii.gz"
-		f"{OUTPUT_FOLDER}/{{subject}}/masks/{{subject}}_binary_acapulco_mni.nii.gz"
+		expand(f"{OUTPUT_FOLDER}/{{subject}}/masks/{{subject}}_n4_affine.txt", subject = SUBJECTS),
+		expand(f"{OUTPUT_FOLDER}/{{subject}}/masks/{{subject}}_n4_inv-affine.txt", subject = SUBJECTS),
+		expand(f"{OUTPUT_FOLDER}/{{subject}}/masks/{{subject}}_n4_mni_seg_post.nii.gz", subject = SUBJECTS),
+		expand(f"{OUTPUT_FOLDER}/{{subject}}/masks/{{subject}}_n4_mni_seg_post_inverse.nii.gz", subject = SUBJECTS),
+		expand(f"{OUTPUT_FOLDER}/{{subject}}/masks/{{subject}}_seg_acapulco_mni.nii.gz", subject = SUBJECTS),
+		expand(f"{OUTPUT_FOLDER}/{{subject}}/masks/{{subject}}_binary_acapulco_mni.nii.gz", subject = SUBJECTS),
 
-		f"{OUTPUT_FOLDER}/{{subject}}/mni/{{subject}}_t1w_mni.nii.gz"
+		expand(f"{OUTPUT_FOLDER}/{{subject}}/mni/{{subject}}_t1w_mni.nii.gz", subject = SUBJECTS),
+		
+		expand(f"{OUTPUT_FOLDER}/{{subject}}/bbox_cerebellum/{{subject}}_binary_acapulco_cropped.nii.gz", subject = SUBJECTS),
+		expand(f"{OUTPUT_FOLDER}/{{subject}}/bbox_cerebellum/{{subject}}_t1w_cropped.nii.gz", subject = SUBJECTS),
+		expand(f"{OUTPUT_FOLDER}/{{subject}}/bbox_cerebellum/{{subject}}_corrected_{{substructure}}_cropped.nii.gz", subject = SUBJECTS, substructure = SUBSTRUCTURES.keys()),
+		expand(f"{OUTPUT_FOLDER}/{{subject}}/bbox_cerebellum/{{subject}}_{{substructure}}_persistence_band.nii.gz", subject = SUBJECTS, substructure = SUBSTRUCTURES.keys()),
+		expand(f"{OUTPUT_FOLDER}/{{subject}}/bbox_cerebellum/{{subject}}_{{substructure}}_thresh_persistence.nii.gz", subject = SUBJECTS, substructure = SUBSTRUCTURES.keys()),
 
-		f"{OUTPUT_FOLDER}/{{subject}}/bbox_cerebellum/{{subject}}_binary_acapulco_cropped.nii.gz"
-		f"{OUTPUT_FOLDER}/{{subject}}/bbox_cerebellum/{{subject}}_t1w_cropped.nii.gz"
-		f"{OUTPUT_FOLDER}/{{subject}}/bbox_cerebellum/{{subject}}_corrected_substructure_cropped.nii.gz"
-		f"{OUTPUT_FOLDER}/{{subject}}/bbox_cerebellum/{{subject}}_persistence_band.nii.gz"
-		f"{OUTPUT_FOLDER}/{{subject}}/bbox_cerebellum/{{subject}}_thresh_persistence.nii.gz"
-		f"{OUTPUT_FOLDER}/{{subject}}/bbox_cerebellum/{{subject}}_{{substructure}}_masked_persistence.nii.gz"
-
-		f"{OUTPUT_FOLDER}/{{subject}}/{{subject}}_{{substructure}}_skeleton_cropped.nii.gz"
+		expand(f"{OUTPUT_FOLDER}/{{subject}}/bbox_cerebellum/{{subject}}_{{substructure}}_masked_persistence.nii.gz", subject = SUBJECTS, substructure = SUBSTRUCTURES.keys()),
+		expand(f"{OUTPUT_FOLDER}/{{subject}}/{{subject}}_{{substructure}}_skeleton_cropped.nii.gz", subject = SUBJECTS, substructure = SUBSTRUCTURES.keys())
 
 
 # ----------------------------------------------
@@ -73,84 +82,83 @@ rule all:
 
 
 rule acapulco_segmentation :
-	container : acapulco-cpu
-
+	container : "containers/acapulco-cpu.sif"
 	input :
 		raw_nifti = f"{RAW_DATA}/{{subject}}.nii.gz"
 
+	output :
+		output_directory = temp(directory(f"{OUTPUT_FOLDER}/{{subject}}/acapulco")),
+		tmp_nii = temp(f"{OUTPUT_FOLDER}/{{subject}}/{{subject}}.nii")
+
 	params :
 		method = config["segmentation_params"]["method"]
+	
+	log : 
+		"logs/acapulco_segmentation/{subject}.log"
 
-	output :
-		output_directory = temp(directory(f"{OUTPUT_FOLDER}/{{subject}}/acapulco"))
-		tmp_nii = temp(f"{OUTPUT_FOLDER}/{{subject}}/{{subject}}.nii")
-		file_ok = f"{OUTPUT_FOLDER}/{{subject}}/.seg_done"
-
-	shell :
-	"""
-	gunzip -c {raw_nifti} > {tmp_nii}
-	mkdir -p {output_directory}
-	acapulco.sh -i {tmp_nii} -o {output_directory} -m {params.method}
-	touch .seg_done
+	shell : """
+	gunzip -c {input.raw_nifti} > {output.tmp_nii}
+	acapulco.sh -i {output.tmp_nii} -o {output.output_directory} -m {params.method} > {log} 2>&1
 	"""
 
 rule copy_mask_and_transform :
 	input :
-		file_ok = f"{OUTPUT_FOLDER}/{{subject}}/.seg_done"
 		acapulco_temp = f"{OUTPUT_FOLDER}/{{subject}}/acapulco"
 
 	output :
-	masks = [
-	f"{OUTPUT_FOLDER}/{{subject}}/masks/{{subject}}_n4_affine.txt",
-	f"{OUTPUT_FOLDER}/{{subject}}/masks/{{subject}}_n4_inv-affine.txt",
-	f"{OUTPUT_FOLDER}/{{subject}}/masks/{{subject}}_n4_mni_seg_post.nii.gz",
-	f"{OUTPUT_FOLDER}/{{subject}}/masks/{{subject}}_n4_mni_seg_post_inverse.nii.gz",
-	]
+		masks = [
+		f"{OUTPUT_FOLDER}/{{subject}}/masks/{{subject}}_n4_affine.txt",
+		f"{OUTPUT_FOLDER}/{{subject}}/masks/{{subject}}_n4_inv-affine.txt",
+		f"{OUTPUT_FOLDER}/{{subject}}/masks/{{subject}}_n4_mni_seg_post.nii.gz",
+		f"{OUTPUT_FOLDER}/{{subject}}/masks/{{subject}}_n4_mni_seg_post_inverse.nii.gz",
+		]
 
-	shell :
-	"""
-	cp {acapulco_temp}/{subject}_n4_affine.txt {output.masks[0]}
-	cp {acapulco_temp}/{subject}_n4_inv-affine.txt {output.masks[1]} 
-	cp {acapulco_temp}/{subject}_n4_mni_seg_post.nii.gz {output.masks[2]}
-	cp {acapulco_temp}/{subject}_n4_mni_seg_post_inverse.nii.gz {output.masks[3]}
+	log : 
+		"logs/copy_masks/{subject}.log"
+
+	shell : """
+	cp {input.acapulco_temp}/{subject}_n4_affine.txt {output.masks[0]}
+	cp {input.acapulco_temp}/{subject}_n4_inv-affine.txt {output.masks[1]} 
+	cp {input.acapulco_temp}/{subject}_n4_mni_seg_post.nii.gz {output.masks[2]}
+	cp {input.acapulco_temp}/{subject}_n4_mni_seg_post_inverse.nii.gz {output.masks[3]}
 	"""
 
 
 rule resampling_mni_registration_t1w :
 	input :
-		raw_nifti = f"{RAW_DATA}/{{subject}}.nii.gz"
+		raw_nifti = f"{RAW_DATA}/{{subject}}.nii.gz",
 		transf_matrix_acapulco = f"{OUTPUT_FOLDER}/{{subject}}/masks/{{subject}}_n4_affine.txt"
 
 	output :
 		resampled_t1w_mni = f"{OUTPUT_FOLDER}/{{subject}}/mni/{{subject}}_t1w_mni.nii.gz"
 	
 	params :
-		name_morphologist = config["morphologist"]
+		script = SCRIPTS("resampling.py")
+	
+	log : 
+		"logs/resampling_t1w/{subject}.log"
 
-	shell :
-	"""
-	module load {name_morphologist}
-
-	python {workflow.basedir}/script/resampling.py --verbose --acapulco --input {raw_nifti} --output {resampled_t1w_mni} --transform_mask {transf_matrix_acapulco}
+	shell : """
+	{morphologist_env()} python {params.script} --acapulco --input {input.raw_nifti} --output {output.resampled_t1w_mni} --transform_mask {input.transf_matrix_acapulco} --verbose > {log} 2>&1
 	"""
 
 
 rule resampling_mni_registration_acapulco_mask :
 	input :
-		mask_native = f"{OUTPUT_FOLDER}/{{subject}}/masks/{{subject}}_n4_mni_seg_post_inverse.nii.gz"
+		mask_native = f"{OUTPUT_FOLDER}/{{subject}}/masks/{{subject}}_n4_mni_seg_post_inverse.nii.gz",
 		transf_matrix_acapulco = f"{OUTPUT_FOLDER}/{{subject}}/masks/{{subject}}_n4_affine.txt"
 
 	output :
 		resampled_mask_mni = f"{OUTPUT_FOLDER}/{{subject}}/masks/{{subject}}_seg_acapulco_mni.nii.gz"
 
 	params :
-		name_morphologist = config["morphologist"]
+		script = SCRIPTS("resampling.py")
 
-	shell :
-	"""
-	module load {name_morphologist}
+	log : 
+		"logs/resampling_acapulco/{subject}.log"
 
-	python {workflow.basedir}/script/resampling.py --verbose --acapulco --mask --input {mask_native} --output {resampled_mask_mni} --transform_mask {transf_matrix_acapulco}
+	shell : """
+	{morphologist_env()} python {params.script} --acapulco --mask --input {input.mask_native} --output {output.resampled_mask_mni} --transform_mask {input.transf_matrix_acapulco} --verbose > {log} 2>&1
 	"""
 
 rule binarisation_acapulco_mask :
@@ -161,13 +169,13 @@ rule binarisation_acapulco_mask :
 		binary_mask_acapulco = f"{OUTPUT_FOLDER}/{{subject}}/masks/{{subject}}_binary_acapulco_mni.nii.gz"
 	
 	params :
-		name_morphologist = config["morphologist"]
+		script = SCRIPTS("binarisation_mask.py")
 
-	shell : 
-	"""
-	module load {name_morphologist}
+	log : 
+		"logs/binarisation_acapulco/{subject}.log"
 
-	python {workflow.basedir}/script/binarisation_mask.py --input {mask_acapulco} --output {binary_mask_acapulco}
+	shell : """
+	{morphologist_env()} python {params.script} --input {input.mask_acapulco} --output {output.binary_mask_acapulco} --verbose > {log} 2>&1
 	"""
 
 rule dilatation_mask_substructure :
@@ -178,14 +186,14 @@ rule dilatation_mask_substructure :
 		f"{OUTPUT_FOLDER}/common/{{substructure}}_dilated_mask.nii.gz"
 
 	params :
-		name_morphologist = config["morphologist"]
-		dilatation = config["dilatation_substructure"]
+		dilatation = config["dilatation_substructure"],
+		script = SCRIPTS("dilatation_mask.py")
 
-	shell : 
-	"""
-	module load {name_morphologist}
+	log : 
+		"logs/dilatation_mask_sub/{substructure}.log"
 
-	python {workflow.basedir}/script/dilatation_mask.py --input {input.mask} --output {output} --dilatation {dilatation}
+	shell : """
+	{morphologist_env()} python {params.script} --input {input.mask} --output {output} --dilatation {params.dilatation} --verbose > {log} 2>&1
 	"""
 
 rule compute_bbox_cerebellum :
@@ -196,135 +204,136 @@ rule compute_bbox_cerebellum :
 		f"{OUTPUT_FOLDER}/common/bbox_cerebellum_atlas.npy"
 	
 	params :
-		name_morphologist = config["morphologist"]
-		dilatation_cerebellum_mask = config["dilatation_cerebellum_atlas_mask"]
+		dilatation_cerebellum_mask = config["dilatation_cerebellum_atlas_mask"],
+		script = SCRIPTS("compute_bounding_box.py")
 	
-	shell : 
-	"""
-	module load {name_morphologist}
+	log : 
+		"logs/cerebellum_bbox.log"
 
-	python {workflow.basedir}/script/compute_bounding_box.py --input mask_cerebellum --output {output} --dilatation {dilatation_cerebellum_mask}
+	shell : """
+	{morphologist_env()} python {params.script} --input {input.mask_cerebellum} --output {output} --dilatation {params.dilatation_cerebellum_mask} --verbose > {log} 2>&1
 	"""
 
 rule apply_cerebellum_bbox_mask_acapulco : 
 	input : 
-		mask_acapulco = f"{OUTPUT_FOLDER}/{{subject}}/masks/{{subject}}_binary_acapulco_mni.nii.gz"
+		mask_acapulco = f"{OUTPUT_FOLDER}/{{subject}}/masks/{{subject}}_binary_acapulco_mni.nii.gz",
 		bbox_cerebellum = f"{OUTPUT_FOLDER}/common/bbox_cerebellum_atlas.npy"
 
 	output : 
 		f"{OUTPUT_FOLDER}/{{subject}}/bbox_cerebellum/{{subject}}_binary_acapulco_cropped.nii.gz"
-	
+
 	params :
-		name_morphologist = config["morphologist"]
+		script = SCRIPTS("apply_bounding_box.py")
 
-	shell :
-	"""
-	module load {name_morphologist}
+	log : 
+		"logs/bbox_1_acapulco/{subject}.log"
 
-	python {workflow.basedir}/script/apply_bounding_box.py --bbox_npy {input.bbox_cerebellum} --input {input.mask_acapulco} --output {output}
+	shell : """
+	{morphologist_env()} python {params.script} --bbox_npy {input.bbox_cerebellum} --input {input.mask_acapulco} --output {output} --verbose > {log} 2>&1
 	"""
 
 rule apply_cerebellum_bbox_mask_t1w : 
 	input : 
-		mask_t1w = f"{OUTPUT_FOLDER}/{{subject}}/mni/{{subject}}_t1w_mni.nii.gz"
+		mask_t1w = f"{OUTPUT_FOLDER}/{{subject}}/mni/{{subject}}_t1w_mni.nii.gz",
 		bbox_cerebellum = f"{OUTPUT_FOLDER}/common/bbox_cerebellum_atlas.npy"
 
 	output : 
 		f"{OUTPUT_FOLDER}/{{subject}}/bbox_cerebellum/{{subject}}_t1w_cropped.nii.gz"
 	
-	params :
-		name_morphologist = config["morphologist"]
+	params : 
+		script = SCRIPTS("apply_bounding_box.py")
+	
+	log : 
+		"logs/bbox_1_t1w/{subject}.log"
 
-	shell :
-	"""
-	module load {name_morphologist}
-
-	python {workflow.basedir}/script/apply_bounding_box.py --bbox_npy {input.bbox_cerebellum} --input {input.mask_t1w} --output {output}
+	shell : """
+	{morphologist_env()} python {params.script} --bbox_npy {input.bbox_cerebellum} --input {input.mask_t1w} --output {output} --verbose > {log} 2>&1
 	"""
 
 rule apply_cerebellum_bbox_mask_substructure : 
 	input : 
-		mask_substructure = f"{OUTPUT_FOLDER}/common/{{substructure}}_dilated_mask.nii.gz"
+		mask_substructure = f"{OUTPUT_FOLDER}/common/{{substructure}}_dilated_mask.nii.gz",
 		bbox_cerebellum = f"{OUTPUT_FOLDER}/common/bbox_cerebellum_atlas.npy"
 
 	output : 
 		f"{OUTPUT_FOLDER}/common/{{substructure}}_mask_cropped.nii.gz"
 	
-	params :
-		name_morphologist = config["morphologist"]
+	params : 
+		script = SCRIPTS("apply_bounding_box.py")
 
-	shell :
-	"""
-	module load {name_morphologist}
+	log : 
+		"logs/bbox_1_substruct/{substructure}.log"
 
-	python {workflow.basedir}/script/apply_bounding_box.py --bbox_npy {input.bbox_cerebellum} --input {input.mask_substructure} --output {output}
+	shell : """
+	{morphologist_env()} python {params.script} --bbox_npy {input.bbox_cerebellum} --input {input.mask_substructure} --output {output} --verbose > {log} 2>&1
 	"""
 
 rule fusion_acapulco_substructures_mask :
 	input :
-		mask_substructure = f"{OUTPUT_FOLDER}/common/{{substructure}}_mask_cropped.nii.gz"
+		mask_substructure = f"{OUTPUT_FOLDER}/common/{{substructure}}_mask_cropped.nii.gz",
 		mask_acapulco = f"{OUTPUT_FOLDER}/{{subject}}/bbox_cerebellum/{{subject}}_binary_acapulco_cropped.nii.gz"
 	
 	output : 
-		f"{OUTPUT_FOLDER}/{{subject}}/bbox_cerebellum/{{subject}}_corrected_substructure_cropped.nii.gz"
+		f"{OUTPUT_FOLDER}/{{subject}}/bbox_cerebellum/{{subject}}_corrected_{{substructure}}_cropped.nii.gz"
 
-	params :
-		name_morphologist = config["morphologist"]
+	params : 
+		script = SCRIPTS("fusion_mask.py")
 	
-	shell : 
-	"""
-	module load {name_morphologist}
+	log : 
+		"logs/fusion_mask/{subject}_{substructure}.log"
 
-	python {workflow.basedir}/script/fusion_mask.py --mask_1 {input.mask_substructure} --mask_2 {input.mask_acapulco} --output {output}
+	shell : """
+	{morphologist_env()} python {params.script} --mask_1 {input.mask_substructure} --mask_2 {input.mask_acapulco} --output {output} --verbose > {log} 2>&1
 	"""
 
 rule compute_multiscale_mean_curvature_persistence :
 	input :
-		corrected_mask_substructure = f"{OUTPUT_FOLDER}/{{subject}}/bbox_cerebellum/{{subject}}_corrected_substructure_cropped.nii.gz"
+		corrected_mask_substructure = f"{OUTPUT_FOLDER}/{{subject}}/bbox_cerebellum/{{subject}}_corrected_{{substructure}}_cropped.nii.gz",
 		cropped_T1w = f"{OUTPUT_FOLDER}/{{subject}}/bbox_cerebellum/{{subject}}_t1w_cropped.nii.gz"
 	
 	output : 
-		persistence_mean_curv = f"{OUTPUT_FOLDER}/{{subject}}/bbox_cerebellum/{{subject}}_persistence_band.nii.gz"
-		thresholded_persistence_mean_curv = f"{OUTPUT_FOLDER}/{{subject}}/bbox_cerebellum/{{subject}}_thresh_persistence.nii.gz"
+		persistence_mean_curv = f"{OUTPUT_FOLDER}/{{subject}}/bbox_cerebellum/{{subject}}_{{substructure}}_persistence_band.nii.gz",
+		thresholded_persistence_mean_curv = f"{OUTPUT_FOLDER}/{{subject}}/bbox_cerebellum/{{subject}}_{{substructure}}_thresh_persistence.nii.gz"
 	
 	params : 
-		name_morphologist = config["morphologist"]
-		sigmas = " ".join(map(str, config["sigmas"]))
-		thresh_persis = config["threshold_persistence"]
-		min_quantile = config["min_quantile"]
-		max_quantile = config["max_quantile"]
+		sigmas = " ".join(map(str, config["sigmas"])),
+		thresh_persis = config["threshold_persistence"],
+		min_quantile = config["min_quantile"],
+		max_quantile = config["max_quantile"],
+		script = SCRIPTS("persistence_mean_curvature.py")
 	
-	shell :
-	"""
-	module load {name_morphologist}
+	log : 
+		"logs/multi_scale_curv/{subject}_{substructure}.log"
 
-	python {workflow.basedir}/script/persistence_mean_curvature.py \
+	shell : """
+	{morphologist_env()} python {params.script} \
 	--input {input.cropped_T1w} \
 	--output_persistence {output.persistence_mean_curv} \
 	--output_thresholded {output.thresholded_persistence_mean_curv} \
 	--cerebellum_mask {input.corrected_mask_substructure} \
-	--threshold_persistence {thresh_persis} \
-	--min_quantile {min_quantile]} \
-	--max_quantile {max_quantile]} \
-	--sigmas {sigmas}
+	--threshold_persistence {params.thresh_persis} \
+	--min_quantile {params.min_quantile} \
+	--max_quantile {params.max_quantile} \
+	--sigmas {params.sigmas} \
+	--verbose > {log} 2>&1
 	"""
 
 rule apply_mask_corrected_substructure :
 	input : 
-		thresholded_persistence_mean_curv = f"{OUTPUT_FOLDER}/{{subject}}/bbox_cerebellum/{{subject}}_thresh_persistence.nii.gz"
-		corrected_mask_substructure = f"{OUTPUT_FOLDER}/{{subject}}/bbox_cerebellum/{{subject}}_corrected_substructure_cropped.nii.gz"
+		thresholded_persistence_mean_curv = f"{OUTPUT_FOLDER}/{{subject}}/bbox_cerebellum/{{subject}}_{{substructure}}_thresh_persistence.nii.gz",
+		corrected_mask_substructure = f"{OUTPUT_FOLDER}/{{subject}}/bbox_cerebellum/{{subject}}_corrected_{{substructure}}_cropped.nii.gz"
 	
 	output : 
 		f"{OUTPUT_FOLDER}/{{subject}}/bbox_cerebellum/{{subject}}_{{substructure}}_masked_persistence.nii.gz"
 	
 	params : 
-		name_morphologist = config["morphologist"]
+		script = SCRIPTS("apply_mask.py")
 	
-	shell :
-	"""
-	module load {name_morphologist}
+	log : 
+		"logs/apply_mask_sub/{subject}_{substructure}.log"
 
-	python {workflow.basedir}/script/apply_mask.py --input {thresholded_persistence_mean_curv} --mask {corrected_mask_substructure} --output {output}
+	shell : """
+	{morphologist_env()} python {params.script} --input {input.thresholded_persistence_mean_curv} --mask {input.corrected_mask_substructure} --output {output} --verbose > {log} 2>&1
 	"""
 
 rule compute_bbox_substructure : 
@@ -335,29 +344,29 @@ rule compute_bbox_substructure :
 		f"{OUTPUT_FOLDER}/common/{{substructure}}_bbox.npy"
 	
 	params : 
-		name_morphologist = config["morphologist"]
+		script = SCRIPTS("compute_bounding_box.py")
 	
-	shell :
-	"""
-	module load {name_morphologist}
+	log : 
+		"logs/compute_bbox_substruct/{substructure}.log"
 
-	python {workflow.basedir}/script/compute_bbox_cerebellum.py --input  {dilated_mask_substructure} --output {output} --dilatation 0
+	shell : """
+	{morphologist_env()} python {params.script} --input {input.dilated_mask_substructure} --output {output} --dilatation 0 --verbose > {log} 2>&1
 	"""
 
 rule apply_bbox_substructure : 
 	input : 
-		substructure_bbox = f"{OUTPUT_FOLDER}/common/{{substructure}}_bbox.npy"
+		substructure_bbox = f"{OUTPUT_FOLDER}/common/{{substructure}}_bbox.npy",
 		masked_persistence = f"{OUTPUT_FOLDER}/{{subject}}/bbox_cerebellum/{{subject}}_{{substructure}}_masked_persistence.nii.gz"
 	
 	output : 
 		cropped_substructure = f"{OUTPUT_FOLDER}/{{subject}}/{{subject}}_{{substructure}}_skeleton_cropped.nii.gz"
 	
-	params : 
-		name_morphologist = config["morphologist"]
-	
-	shell :
-	"""
-	module load {name_morphologist}
+	params :
+		script = SCRIPTS("apply_bounding_box.py")
 
-	python {workflow.basedir}/script/apply_bounding_box.py --input {masked_persistence} --output {cropped_subctructure} --bbox_npy substructure_bbox
+	log : 
+		"logs/bbox_2/{subject}_{substructure}.log"
+
+	shell : """
+	{morphologist_env()} python {params.script} --input {input.masked_persistence} --output {output.cropped_substructure} --bbox_npy {input.substructure_bbox} --verbose > {log} 2>&1
 	"""
