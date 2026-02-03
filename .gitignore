@@ -2,5 +2,7 @@
 containers/*.sif
 
 # Don't commit results
-
 results/*
+
+# don't commit private informations (paths, thesh, ...)
+config.yaml
