@@ -2,8 +2,12 @@
 # Pipeline parameters
 # ------------------------------------------
 
-# Module names TGCC
-morphologist : "morphologist/5.2"
+# Environement management
+execution : "local"
+
+environments :
+  module_tgcc : "morphologist/5.2"
+  pixi_env : "morphologist"
 
 ## Inputs
 subject_list : "subjects.txt" # Subject list file
@@ -14,7 +18,7 @@ data_structure : "relative_path_of_individual_subject_nifti"
 output_folder : "path_to_save_outputs"
 
 ## Dataset 
-dataset_name : "UKBiobank"
+dataset_name : "UKBiobank" #Name of the dataset of raw data
 
 # ------------------------------------------
 # Pipeline parameters
@@ -22,14 +26,16 @@ dataset_name : "UKBiobank"
 
 ## Dataset
 dataset :
-	name : "UKBiobank"
-	version : "too_add"
+  name : "UKBiobank" #Dataset name at the end of the pipeline
+  version : "too_add" # Version of the dataset
 
-segmentation_params : 
-        method : "kki"
+## Acapulco parameters
+segmentation_params :
+  method : "kki"
+
 ## Substructures' masks paths
 substructures_masks : #Can take a list of substructure's mask
-	vermis_mask : "path_to_the_vermis_mask"
+  vermis_mask : "path_to_the_vermis_mask"
 
 cerebellum_atlas_path_mask : "path_to_cerebellum_atlas_mask"
 
@@ -41,3 +47,4 @@ dilatation_substructure : 5 #voxels
 sigmas : [1, 2, 3]
 min_quantile : 0.01
 max_quantile : 0.3
+threshold_persistence : 3
