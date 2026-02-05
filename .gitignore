@@ -5,4 +5,8 @@ containers/*.sif
 results/*
 
 # don't commit private informations (paths, thesh, ...)
-config.yaml
+./config.yaml
+
+# pixi environments
+.pixi
+*.egg-info
