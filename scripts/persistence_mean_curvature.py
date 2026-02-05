@@ -128,7 +128,7 @@ persis_band = np.sum(all_band, axis= 0)
 persis_weighted = np.sum(all_scaled_mc, axis= 0)
 
 # Thresholding persistence
-thresholded_persistence_band = np.where(persis_band >= args.threshold_persistence, 1, 0)
+thresholded_persistence_band = np.where(persis_band >= int(args.threshold_persistence), 1, 0)
 
 # Saving persistence volume
 save_numpy_nifti(persis_band, args.output_persistence, header=header_input)
