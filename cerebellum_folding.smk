@@ -90,7 +90,6 @@ rule acapulco_segmentation :
 
 	output :
 		output_directory = temp(directory(f"{OUTPUT_FOLDER}/{{subject}}/acapulco")),
-		tmp_nii = temp(f"{OUTPUT_FOLDER}/{{subject}}/{{subject}}.nii")
 
 	params :
 		method = config["segmentation_params"]["method"]
@@ -99,8 +98,8 @@ rule acapulco_segmentation :
 		"logs/acapulco_segmentation/{subject}.log"
 
 	shell : """
-	gunzip -c {input.raw_nifti} > {output.tmp_nii}
-	acapulco.sh -i {output.tmp_nii} -o {output.output_directory} -m {params.method} > {log} 2>&1
+	mkdir -p {output.output_directory}
+	acapulco.sh -i {input.raw_nifti} -o {output.output_directory} -m {params.method} > {log} 2>&1
 	"""
 
 rule copy_mask_and_transform :
