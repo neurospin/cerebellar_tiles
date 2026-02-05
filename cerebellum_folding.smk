@@ -49,7 +49,9 @@ def morphologist_env() :
 	if PLATFORM == "tgcc" :
 		return f"module load {config['environments']['module_tgcc']} &&"
 	else :
-		return f"pixi run -e {config['environments']['pixi_env']}"
+		return f"pixi run --manifest-path {config['environments']['pixi_env']}"
+
+MORPHO_ENV_PREFIX = morphologist_env()
 
 # ----------------------------------------------
 # Rule all
@@ -139,7 +141,7 @@ rule resampling_mni_registration_t1w :
 		"logs/resampling_t1w/{subject}.log"
 
 	shell : """
-	{morphologist_env()} python {params.script} --acapulco --input {input.raw_nifti} --output {output.resampled_t1w_mni} --transform_mask {input.transf_matrix_acapulco} --verbose > {log} 2>&1
+	{MORPHO_ENV_PREFIX} python {params.script} --acapulco --input {input.raw_nifti} --output {output.resampled_t1w_mni} --transform_mat {input.transf_matrix_acapulco} --verbose > {log} 2>&1
 	"""
 
 
@@ -158,7 +160,7 @@ rule resampling_mni_registration_acapulco_mask :
 		"logs/resampling_acapulco/{subject}.log"
 
 	shell : """
-	{morphologist_env()} python {params.script} --acapulco --mask --input {input.mask_native} --output {output.resampled_mask_mni} --transform_mask {input.transf_matrix_acapulco} --verbose > {log} 2>&1
+	{MORPHO_ENV_PREFIX} python {params.script} --acapulco --mask --input {input.mask_native} --output {output.resampled_mask_mni} --transform_mat {input.transf_matrix_acapulco} --verbose > {log} 2>&1
 	"""
 
 rule binarisation_acapulco_mask :
@@ -175,7 +177,7 @@ rule binarisation_acapulco_mask :
 		"logs/binarisation_acapulco/{subject}.log"
 
 	shell : """
-	{morphologist_env()} python {params.script} --input {input.mask_acapulco} --output {output.binary_mask_acapulco} --verbose > {log} 2>&1
+	{MORPHO_ENV_PREFIX} python {params.script} --input {input.mask_acapulco} --output {output.binary_mask_acapulco} --verbose > {log} 2>&1
 	"""
 
 rule dilatation_mask_substructure :
@@ -193,7 +195,7 @@ rule dilatation_mask_substructure :
 		"logs/dilatation_mask_sub/{substructure}.log"
 
 	shell : """
-	{morphologist_env()} python {params.script} --input {input.mask} --output {output} --dilatation {params.dilatation} --verbose > {log} 2>&1
+	{MORPHO_ENV_PREFIX} python {params.script} --input {input.mask} --output {output} --dilatation {params.dilatation} --verbose > {log} 2>&1
 	"""
 
 rule compute_bbox_cerebellum :
@@ -211,7 +213,7 @@ rule compute_bbox_cerebellum :
 		"logs/cerebellum_bbox.log"
 
 	shell : """
-	{morphologist_env()} python {params.script} --input {input.mask_cerebellum} --output {output} --dilatation {params.dilatation_cerebellum_mask} --verbose > {log} 2>&1
+	{MORPHO_ENV_PREFIX} python {params.script} --input {input.mask_cerebellum} --output {output} --dilatation {params.dilatation_cerebellum_mask} --verbose > {log} 2>&1
 	"""
 
 rule apply_cerebellum_bbox_mask_acapulco : 
@@ -229,7 +231,7 @@ rule apply_cerebellum_bbox_mask_acapulco :
 		"logs/bbox_1_acapulco/{subject}.log"
 
 	shell : """
-	{morphologist_env()} python {params.script} --bbox_npy {input.bbox_cerebellum} --input {input.mask_acapulco} --output {output} --verbose > {log} 2>&1
+	{MORPHO_ENV_PREFIX} python {params.script} --bbox_npy {input.bbox_cerebellum} --input {input.mask_acapulco} --output {output} --verbose > {log} 2>&1
 	"""
 
 rule apply_cerebellum_bbox_mask_t1w : 
@@ -247,7 +249,7 @@ rule apply_cerebellum_bbox_mask_t1w :
 		"logs/bbox_1_t1w/{subject}.log"
 
 	shell : """
-	{morphologist_env()} python {params.script} --bbox_npy {input.bbox_cerebellum} --input {input.mask_t1w} --output {output} --verbose > {log} 2>&1
+	{MORPHO_ENV_PREFIX} python {params.script} --bbox_npy {input.bbox_cerebellum} --input {input.mask_t1w} --output {output} --verbose > {log} 2>&1
 	"""
 
 rule apply_cerebellum_bbox_mask_substructure : 
@@ -265,7 +267,7 @@ rule apply_cerebellum_bbox_mask_substructure :
 		"logs/bbox_1_substruct/{substructure}.log"
 
 	shell : """
-	{morphologist_env()} python {params.script} --bbox_npy {input.bbox_cerebellum} --input {input.mask_substructure} --output {output} --verbose > {log} 2>&1
+	{MORPHO_ENV_PREFIX} python {params.script} --bbox_npy {input.bbox_cerebellum} --input {input.mask_substructure} --output {output} --verbose > {log} 2>&1
 	"""
 
 rule fusion_acapulco_substructures_mask :
@@ -283,7 +285,7 @@ rule fusion_acapulco_substructures_mask :
 		"logs/fusion_mask/{subject}_{substructure}.log"
 
 	shell : """
-	{morphologist_env()} python {params.script} --mask_1 {input.mask_substructure} --mask_2 {input.mask_acapulco} --output {output} --verbose > {log} 2>&1
+	{MORPHO_ENV_PREFIX} python {params.script} --mask_1 {input.mask_substructure} --mask_2 {input.mask_acapulco} --output {output} --verbose > {log} 2>&1
 	"""
 
 rule compute_multiscale_mean_curvature_persistence :
@@ -306,7 +308,7 @@ rule compute_multiscale_mean_curvature_persistence :
 		"logs/multi_scale_curv/{subject}_{substructure}.log"
 
 	shell : """
-	{morphologist_env()} python {params.script} \
+	{MORPHO_ENV_PREFIX} python {params.script} \
 	--input {input.cropped_T1w} \
 	--output_persistence {output.persistence_mean_curv} \
 	--output_thresholded {output.thresholded_persistence_mean_curv} \
@@ -333,7 +335,7 @@ rule apply_mask_corrected_substructure :
 		"logs/apply_mask_sub/{subject}_{substructure}.log"
 
 	shell : """
-	{morphologist_env()} python {params.script} --input {input.thresholded_persistence_mean_curv} --mask {input.corrected_mask_substructure} --output {output} --verbose > {log} 2>&1
+	{MORPHO_ENV_PREFIX} python {params.script} --input {input.thresholded_persistence_mean_curv} --mask {input.corrected_mask_substructure} --output {output} --verbose > {log} 2>&1
 	"""
 
 rule compute_bbox_substructure : 
@@ -350,7 +352,7 @@ rule compute_bbox_substructure :
 		"logs/compute_bbox_substruct/{substructure}.log"
 
 	shell : """
-	{morphologist_env()} python {params.script} --input {input.dilated_mask_substructure} --output {output} --dilatation 0 --verbose > {log} 2>&1
+	{MORPHO_ENV_PREFIX} python {params.script} --input {input.dilated_mask_substructure} --output {output} --dilatation 0 --verbose > {log} 2>&1
 	"""
 
 rule apply_bbox_substructure : 
@@ -368,5 +370,5 @@ rule apply_bbox_substructure :
 		"logs/bbox_2/{subject}_{substructure}.log"
 
 	shell : """
-	{morphologist_env()} python {params.script} --input {input.masked_persistence} --output {output.cropped_substructure} --bbox_npy {input.substructure_bbox} --verbose > {log} 2>&1
+	{MORPHO_ENV_PREFIX} python {params.script} --input {input.masked_persistence} --output {output.cropped_substructure} --bbox_npy {input.substructure_bbox} --verbose > {log} 2>&1
 	"""
