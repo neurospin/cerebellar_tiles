@@ -34,7 +34,7 @@ configfile : "config.yaml"
 RAW_DATA = config["raw_data"] # Raw data path (root of the file; e.g. folder/<subject_folder>/...)
 OUTPUT_FOLDER = config["output_folder"] # Output of the pipeline
 PLATFORM = config["execution"]
-SCRIPTS = lambda script : f"{workflow.basedir}/script/{script}"
+SCRIPTS = lambda script : f"{workflow.basedir}/scripts/{script}"
 
 ## Retrieving subjects list
 with open(config["subject_list"]) as f : 
@@ -119,10 +119,10 @@ rule copy_mask_and_transform :
 		"logs/copy_masks/{subject}.log"
 
 	shell : """
-	cp {input.acapulco_temp}/{subject}_n4_affine.txt {output.masks[0]}
-	cp {input.acapulco_temp}/{subject}_n4_inv-affine.txt {output.masks[1]} 
-	cp {input.acapulco_temp}/{subject}_n4_mni_seg_post.nii.gz {output.masks[2]}
-	cp {input.acapulco_temp}/{subject}_n4_mni_seg_post_inverse.nii.gz {output.masks[3]}
+	cp {input.acapulco_temp}/mni/{wildcards.subject}_n4_affine.txt {output.masks[0]}
+	cp {input.acapulco_temp}/mni/{wildcards.subject}_n4_inv-affine.txt {output.masks[1]}
+	cp {input.acapulco_temp}/parc/{wildcards.subject}_n4_mni_seg_post.nii.gz {output.masks[2]}
+	cp {input.acapulco_temp}/{wildcards.subject}_n4_mni_seg_post_inverse.nii.gz {output.masks[3]}
 	"""
 
 
