@@ -24,13 +24,13 @@ header_template = mask_1.header()
 # Asserting the shape are the same
 assert mask_1.np.shape == mask_2.np.shape,f"Mask should have the same shapes, got mask 1 : {mask_1.np.shape}, mask 2 {mask_2.np.shape}"
 # Checking content of the masks
-assert np.unique(mask_1.np).astype(np.int16) == [0,1]
-assert np.unique(mask_2.np).astype(np.int26) == [0,1]
+assert np.unique(mask_1.np).astype(np.int16).all() in [0,1]
+assert np.unique(mask_2.np).astype(np.int16).all() in [0,1]
 
 merged_mask_np = mask_1.np * mask_2.np
 
 merge_mask_aims = aims.Volume(merged_mask_np.astype(np.int16))
-merge_mask_aims.copyFromHeader(header_template)
+merge_mask_aims.copyHeaderFrom(header_template)
 
 aims.write(merge_mask_aims, args.output)
 
