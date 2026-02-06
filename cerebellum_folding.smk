@@ -29,7 +29,9 @@ onerror:
 import yaml
 
 # Global parameters
-RAW_DATA = config["raw_data"] # Raw data path (root of the file; e.g. folder/<subject_folder>/...)
+RAW_PATH = config["raw_data"] # Raw data path (root of the file; e.g. folder/<subject_folder>/...)
+PATH_STRUCTURE = config["data_structure"]
+RAW_DATA = lambda s : f"{RAW_PATH}/{s}/{PATH_STRUCTURE}/{s}.nii.gz"
 OUTPUT_FOLDER = config["output_folder"] # Output of the pipeline
 PLATFORM = config["execution"]
 SCRIPTS = lambda script : f"{workflow.basedir}/scripts/{script}"
@@ -85,7 +87,7 @@ rule all:
 rule acapulco_segmentation :
 	container : "containers/acapulco-cpu.sif"
 	input :
-		raw_nifti = f"{RAW_DATA}/{{subject}}.nii.gz"
+		raw_nifti = lambda wildcards : RAW_DATA(wildcards.subject)
 
 	output :
 		output_directory = temp(directory(f"{OUTPUT_FOLDER}/{{subject}}/acapulco")),
@@ -126,7 +128,7 @@ rule copy_mask_and_transform :
 
 rule resampling_mni_registration_t1w :
 	input :
-		raw_nifti = f"{RAW_DATA}/{{subject}}.nii.gz",
+		raw_nifti = lambda wildcards : RAW_DATA(wildcards.subject),
 		transf_matrix_acapulco = f"{OUTPUT_FOLDER}/{{subject}}/masks/{{subject}}_n4_affine.txt"
 
 	output :
