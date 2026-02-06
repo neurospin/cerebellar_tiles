@@ -33,12 +33,13 @@ RAW_PATH = config["raw_data"] # Raw data path (root of the file; e.g. folder/<su
 PATH_STRUCTURE = config["data_structure"]
 SUFFIX_SUBJECT = config["suffix_nifti"]
 
-# RAW_DATA = lambda s : f"{RAW_PATH}/{s}/{PATH_STRUCTURE}/{s}.nii.gz"
-def RAW_DATA(subject, raw_path = RAW_PATH, path_structure = PATH_STRUCTURE, suffix_subject = SUFFIX_SUBJECT) :
+def SUBJECT_NIFTI_NAME(subject, suffix_subject=SUFFIX_SUBJECT) :
 	if suffix_subject == "":
-		return f"{raw_path}/{subject}/{path_structure}/{subject}.nii.gz"
+		return subject
 	else : 
-		return f"{raw_path}/{subject}/{path_structure}/{subject}_{suffix_subject}.nii.gz"
+		return f"{subject}_{suffix_subject}"
+
+RAW_DATA = lambda subject : f"{RAW_PATH}/{subject}/{PATH_STRUCTURE}/{SUBJECT_NIFTI_NAME(subject, SUFFIX_SUBJECT)}.nii.gz"
 
 OUTPUT_FOLDER = config["output_folder"] # Output of the pipeline
 PLATFORM = config["execution"]
@@ -122,15 +123,18 @@ rule copy_mask_and_transform :
 		f"{OUTPUT_FOLDER}/{{subject}}/masks/{{subject}}_n4_mni_seg_post.nii.gz",
 		f"{OUTPUT_FOLDER}/{{subject}}/masks/{{subject}}_n4_mni_seg_post_inverse.nii.gz",
 		]
+	
+	params :
+		subject_name = lambda wildcards : SUBJECT_NIFTI_NAME(wildcards.subject)
 
 	log : 
 		LOG_SNAKEMAKE("copy_masks/{subject}.log")
 
 	shell : """
-	cp {input.acapulco_temp}/mni/{wildcards.subject}_n4_affine.txt {output.masks[0]}
-	cp {input.acapulco_temp}/mni/{wildcards.subject}_n4_inv-affine.txt {output.masks[1]}
-	cp {input.acapulco_temp}/parc/{wildcards.subject}_n4_mni_seg_post.nii.gz {output.masks[2]}
-	cp {input.acapulco_temp}/{wildcards.subject}_n4_mni_seg_post_inverse.nii.gz {output.masks[3]}
+	cp {input.acapulco_temp}/mni/{params.subject_name}_n4_affine.txt {output.masks[0]}
+	cp {input.acapulco_temp}/mni/{params.subject_name}_n4_inv-affine.txt {output.masks[1]}
+	cp {input.acapulco_temp}/parc/{params.subject_name}_n4_mni_seg_post.nii.gz {output.masks[2]}
+	cp {input.acapulco_temp}/{params.subject_name}_n4_mni_seg_post_inverse.nii.gz {output.masks[3]}
 	"""
 
 
