@@ -71,13 +71,14 @@ bin_cerebellum = np.where(mask_cerebellum != 0, 1, 0).astype(bool)
 # Compute mean curvature for each sigma
 if args.verbose :
     print("Computing mean curvature \n")
-def mean_curvature_path(subject : str, suffix : str, folder : str):
-    return f"{folder}/{subject}_mean_curvature_{suffix}.nii.gz"
+def mean_curvature_path(subject : str, mask : str,  suffix : str, folder : str):
+    return f"{folder}/{subject}_{mask}_mean_curvature_{suffix}.nii.gz"
 
 dict_mean_curv = dict()
 for sigma, path_end in mapping_sigma.items() : 
     sub_name = Path(args.input).stem
-    full_path = mean_curvature_path(subject = sub_name, suffix = path_end, folder = args.tmp_folder)
+    mask_name = Path(args.cerebellum_mask).stem
+    full_path = mean_curvature_path(subject = sub_name, mask =mask_name, suffix = path_end, folder = args.tmp_folder)
     if args.verbose :
         print(f"Computing mean curvature of {args.input} with sigma : {sigma}")
     compute_mean_cuvature(args.input, full_path, sigma)
@@ -141,6 +142,7 @@ save_numpy_nifti(thresholded_persistence_band, args.output_thresholded, header=h
 # Cleaning files
 for sigma, path_end in mapping_sigma.items() : 
     sub_name = Path(args.input).stem
-    full_path = mean_curvature_path(subject = sub_name, suffix = path_end, folder = args.tmp_folder)
+    mask_name = Path(args.cerebellum_mask).stem
+    full_path = mean_curvature_path(subject = sub_name, mask =mask_name, suffix = path_end, folder = args.tmp_folder)
     os.remove(full_path)
     os.remove(full_path + ".minf")
