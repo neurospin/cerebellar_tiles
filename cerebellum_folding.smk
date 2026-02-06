@@ -28,13 +28,12 @@ onerror:
 
 import yaml
 
-configfile : "config.yaml"
-
 # Global parameters
 RAW_DATA = config["raw_data"] # Raw data path (root of the file; e.g. folder/<subject_folder>/...)
 OUTPUT_FOLDER = config["output_folder"] # Output of the pipeline
 PLATFORM = config["execution"]
 SCRIPTS = lambda script : f"{workflow.basedir}/scripts/{script}"
+LOG_SNAKEMAKE = lambda log : f"{config['logs']}/{log}"
 
 ## Retrieving subjects list
 with open(config["subject_list"]) as f : 
@@ -95,7 +94,7 @@ rule acapulco_segmentation :
 		method = config["segmentation_params"]["method"]
 	
 	log : 
-		"logs/acapulco_segmentation/{subject}.log"
+		LOG_SNAKEMAKE("acapulco_segmentation/{subject}.log")
 
 	shell : """
 	mkdir -p {output.output_directory}
@@ -115,7 +114,7 @@ rule copy_mask_and_transform :
 		]
 
 	log : 
-		"logs/copy_masks/{subject}.log"
+		LOG_SNAKEMAKE("copy_masks/{subject}.log")
 
 	shell : """
 	cp {input.acapulco_temp}/mni/{wildcards.subject}_n4_affine.txt {output.masks[0]}
@@ -137,7 +136,7 @@ rule resampling_mni_registration_t1w :
 		script = SCRIPTS("resampling.py")
 	
 	log : 
-		"logs/resampling_t1w/{subject}.log"
+		LOG_SNAKEMAKE("resampling_t1w/{subject}.log")
 
 	shell : """
 	{MORPHO_ENV_PREFIX} python {params.script} --acapulco --input {input.raw_nifti} --output {output.resampled_t1w_mni} --transform_mat {input.transf_matrix_acapulco} --verbose > {log} 2>&1
@@ -156,7 +155,7 @@ rule resampling_mni_registration_acapulco_mask :
 		script = SCRIPTS("resampling.py")
 
 	log : 
-		"logs/resampling_acapulco/{subject}.log"
+		LOG_SNAKEMAKE("resampling_acapulco/{subject}.log")
 
 	shell : """
 	{MORPHO_ENV_PREFIX} python {params.script} --acapulco --mask --input {input.mask_native} --output {output.resampled_mask_mni} --transform_mat {input.transf_matrix_acapulco} --verbose > {log} 2>&1
@@ -173,7 +172,7 @@ rule binarisation_acapulco_mask :
 		script = SCRIPTS("binarisation_mask.py")
 
 	log : 
-		"logs/binarisation_acapulco/{subject}.log"
+		LOG_SNAKEMAKE("binarisation_acapulco/{subject}.log")
 
 	shell : """
 	{MORPHO_ENV_PREFIX} python {params.script} --input {input.mask_acapulco} --output {output.binary_mask_acapulco} --verbose > {log} 2>&1
@@ -191,7 +190,7 @@ rule dilatation_mask_substructure :
 		script = SCRIPTS("dilatation_mask.py")
 
 	log : 
-		"logs/dilatation_mask_sub/{substructure}.log"
+		LOG_SNAKEMAKE("dilatation_mask_sub/{substructure}.log")
 
 	shell : """
 	{MORPHO_ENV_PREFIX} python {params.script} --input {input.mask} --output {output} --dilatation {params.dilatation} --verbose > {log} 2>&1
@@ -209,7 +208,7 @@ rule compute_bbox_cerebellum :
 		script = SCRIPTS("compute_bounding_box.py")
 	
 	log : 
-		"logs/cerebellum_bbox.log"
+		LOG_SNAKEMAKE("cerebellum_bbox.log")
 
 	shell : """
 	{MORPHO_ENV_PREFIX} python {params.script} --input {input.mask_cerebellum} --output {output} --dilatation {params.dilatation_cerebellum_mask} --verbose > {log} 2>&1
@@ -227,7 +226,7 @@ rule apply_cerebellum_bbox_mask_acapulco :
 		script = SCRIPTS("apply_bounding_box.py")
 
 	log : 
-		"logs/bbox_1_acapulco/{subject}.log"
+		LOG_SNAKEMAKE("bbox_1_acapulco/{subject}.log")
 
 	shell : """
 	{MORPHO_ENV_PREFIX} python {params.script} --bbox_npy {input.bbox_cerebellum} --input {input.mask_acapulco} --output {output} --verbose > {log} 2>&1
@@ -245,7 +244,7 @@ rule apply_cerebellum_bbox_mask_t1w :
 		script = SCRIPTS("apply_bounding_box.py")
 	
 	log : 
-		"logs/bbox_1_t1w/{subject}.log"
+		LOG_SNAKEMAKE("bbox_1_t1w/{subject}.log")
 
 	shell : """
 	{MORPHO_ENV_PREFIX} python {params.script} --bbox_npy {input.bbox_cerebellum} --input {input.mask_t1w} --output {output} --verbose > {log} 2>&1
@@ -263,7 +262,7 @@ rule apply_cerebellum_bbox_mask_substructure :
 		script = SCRIPTS("apply_bounding_box.py")
 
 	log : 
-		"logs/bbox_1_substruct/{substructure}.log"
+		LOG_SNAKEMAKE("bbox_1_substruct/{substructure}.log")
 
 	shell : """
 	{MORPHO_ENV_PREFIX} python {params.script} --bbox_npy {input.bbox_cerebellum} --input {input.mask_substructure} --output {output} --verbose > {log} 2>&1
@@ -281,7 +280,7 @@ rule fusion_acapulco_substructures_mask :
 		script = SCRIPTS("fusion_mask.py")
 	
 	log : 
-		"logs/fusion_mask/{subject}_{substructure}.log"
+		LOG_SNAKEMAKE("fusion_mask/{subject}_{substructure}.log")
 
 	shell : """
 	{MORPHO_ENV_PREFIX} python {params.script} --mask_1 {input.mask_substructure} --mask_2 {input.mask_acapulco} --output {output} --verbose > {log} 2>&1
@@ -304,7 +303,7 @@ rule compute_multiscale_mean_curvature_persistence :
 		script = SCRIPTS("persistence_mean_curvature.py")
 	
 	log : 
-		"logs/multi_scale_curv/{subject}_{substructure}.log"
+		LOG_SNAKEMAKE("multi_scale_curv/{subject}_{substructure}.log")
 
 	shell : """
 	{MORPHO_ENV_PREFIX} python {params.script} \
@@ -331,7 +330,7 @@ rule apply_mask_corrected_substructure :
 		script = SCRIPTS("apply_mask.py")
 	
 	log : 
-		"logs/apply_mask_sub/{subject}_{substructure}.log"
+		LOG_SNAKEMAKE("apply_mask_sub/{subject}_{substructure}.log")
 
 	shell : """
 	{MORPHO_ENV_PREFIX} python {params.script} --input {input.thresholded_persistence_mean_curv} --mask {input.corrected_mask_substructure} --output {output} --verbose > {log} 2>&1
@@ -348,7 +347,7 @@ rule compute_bbox_substructure :
 		script = SCRIPTS("compute_bounding_box.py")
 	
 	log : 
-		"logs/compute_bbox_substruct/{substructure}.log"
+		LOG_SNAKEMAKE("compute_bbox_substruct/{substructure}.log")
 
 	shell : """
 	{MORPHO_ENV_PREFIX} python {params.script} --input {input.dilated_mask_substructure} --output {output} --dilatation 0 --verbose > {log} 2>&1
@@ -366,7 +365,7 @@ rule apply_bbox_substructure :
 		script = SCRIPTS("apply_bounding_box.py")
 
 	log : 
-		"logs/bbox_2/{subject}_{substructure}.log"
+		LOG_SNAKEMAKE("bbox_2/{subject}_{substructure}.log")
 
 	shell : """
 	{MORPHO_ENV_PREFIX} python {params.script} --input {input.masked_persistence} --output {output.cropped_substructure} --bbox_npy {input.substructure_bbox} --verbose > {log} 2>&1
