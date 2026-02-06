@@ -51,6 +51,6 @@ The steps to run the pipeline are the following ones :
 1. Prepare `config.yaml` file with you options (environements managements, parameters, paths, ...)
 2. Run the command :
 ```
-snakemake -s cerebellum_folding.smk -j <number_jobs_max> --use-apptainer --apptainer-args "--bind <paths_necessary_to_access_data> --home $PWD"
+snakemake -s cerebellum_folding.smk --configfile <your_config> -j <number_jobs_max> --use-apptainer --apptainer-args "--bind <paths_necessary_to_access_data> --home $PWD"
 ```
 
