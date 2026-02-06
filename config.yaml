@@ -13,7 +13,7 @@ environments :
 subject_list : "path_to_file/subjects.txt" # Subject list file
 raw_data : "path_to_all_subjects" # Path of the raw data folder
 data_structure : "t1mri/ses_1" #Structure of the subject's folder to find nifti e.g. : sub-1234/ses-1/BL/.../sub-1234.nii.gz
-suffix_nifit : "ses-1" #Suffix of the nifti (difference with the subject folder's name e.g. : folder_name = sub-1234 and nifti_name sub-1234_ses-1.nii.gz)
+suffix_nifti : "ses-1" #Suffix of the nifti (difference with the subject folder's name e.g. : folder_name = sub-1234 and nifti_name sub-1234_ses-1.nii.gz)
 
 ## Results
 output_folder : "path_to_save_results" #Automatically created
