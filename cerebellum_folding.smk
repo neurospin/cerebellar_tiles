@@ -31,7 +31,15 @@ import yaml
 # Global parameters
 RAW_PATH = config["raw_data"] # Raw data path (root of the file; e.g. folder/<subject_folder>/...)
 PATH_STRUCTURE = config["data_structure"]
-RAW_DATA = lambda s : f"{RAW_PATH}/{s}/{PATH_STRUCTURE}/{s}.nii.gz"
+SUFFIX_SUBJECT = config["suffix_nifti"]
+
+# RAW_DATA = lambda s : f"{RAW_PATH}/{s}/{PATH_STRUCTURE}/{s}.nii.gz"
+def RAW_DATA(subject, raw_path = RAW_PATH, path_structure = PATH_STRUCTURE, suffix_subject = SUFFIX_SUBJECT) :
+	if suffix_subject == "":
+		return f"{raw_path}/{subject}/{path_structure}/{subject}.nii.gz"
+	else : 
+		return f"{raw_path}/{subject}/{path_structure}/{subject}_{suffix_subject}.nii.gz"
+
 OUTPUT_FOLDER = config["output_folder"] # Output of the pipeline
 PLATFORM = config["execution"]
 SCRIPTS = lambda script : f"{workflow.basedir}/scripts/{script}"
