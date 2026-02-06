@@ -1,10 +1,11 @@
 # Importation of librairies
 from soma import aims
 import numpy as np
-import pandas as pd
+# import pandas as pd
 import argparse
 import subprocess as sp
 import os
+from pathlib import Path
 
 # Function definition
 
@@ -42,6 +43,7 @@ def parse_sigma(list_sigma):
 parser = argparse.ArgumentParser()
 parser.add_argument("-v", "--verbose", action="store_true", help="Verbose mode")
 parser.add_argument("--input", required=True, help="Input nifti path")
+parser.add_argument("--tmp_folder", required=True, help="Temporary folder to keep files")
 parser.add_argument("--output_persistence", required=True, help="Persistence nifti saving path")
 parser.add_argument("--output_thresholded", required=True, help="Thresholded persistence nifti saving path")
 parser.add_argument("--cerebellum_mask", required=True, help="TEMPORARY nifti file of the cerebellum mask")
@@ -69,11 +71,13 @@ bin_cerebellum = np.where(mask_cerebellum != 0, 1, 0).astype(bool)
 # Compute mean curvature for each sigma
 if args.verbose :
     print("Computing mean curvature \n")
-mean_curvature_path = lambda x : f"sub_mean-curv_{x}.nii.gz"
+def mean_curvature_path(subject : str, suffix : str, folder : str):
+    return f"{folder}/{subject}_mean_curvature_{suffix}.nii.gz"
 
 dict_mean_curv = dict()
 for sigma, path_end in mapping_sigma.items() : 
-    full_path = mean_curvature_path(path_end)
+    sub_name = Path(args.input).stem
+    full_path = mean_curvature_path(subject = sub_name, suffix = path_end, folder = args.tmp_folder)
     if args.verbose :
         print(f"Computing mean curvature of {args.input} with sigma : {sigma}")
     compute_mean_cuvature(args.input, full_path, sigma)
@@ -81,8 +85,8 @@ for sigma, path_end in mapping_sigma.items() :
         print(f"Success of sigma : {sigma}")
     np_vol = aims.read(full_path).np.copy()
     dict_mean_curv[sigma] = np_vol
-    os.remove(full_path)
-    os.remove(full_path + ".minf")
+    # os.remove(full_path)
+    # os.remove(full_path + ".minf")
 
 
 # Retrieve mask of negative values (i.e. White matter values)
@@ -108,7 +112,7 @@ for sigma, np_vol in dict_scaled_mc.items():
     dict_quantiles[sigma] = np.quantile(mc_neg_val, [args.min_quantile, args.max_quantile])
 if args.verbose :
     print("Quantiles \n", dict_quantiles)
-pd.DataFrame(dict_quantiles).to_csv("quantiles.csv")
+# pd.DataFrame(dict_quantiles).to_csv("quantiles.csv")
 
 # Retrieving bands
 if args.verbose :
@@ -133,3 +137,10 @@ thresholded_persistence_band = np.where(persis_band >= int(args.threshold_persis
 # Saving persistence volume
 save_numpy_nifti(persis_band, args.output_persistence, header=header_input)
 save_numpy_nifti(thresholded_persistence_band, args.output_thresholded, header=header_input)
+
+# Cleaning files
+for sigma, path_end in mapping_sigma.items() : 
+    sub_name = Path(args.input).stem
+    full_path = mean_curvature_path(subject = sub_name, suffix = path_end, folder = args.tmp_folder)
+    os.remove(full_path)
+    os.remove(full_path + ".minf")

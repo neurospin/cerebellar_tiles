@@ -302,7 +302,8 @@ rule compute_multiscale_mean_curvature_persistence :
 		thresh_persis = config["threshold_persistence"],
 		min_quantile = config["min_quantile"],
 		max_quantile = config["max_quantile"],
-		script = SCRIPTS("persistence_mean_curvature.py")
+		script = SCRIPTS("persistence_mean_curvature.py"),
+		tmp_folder = OUTPUT_FOLDER
 	
 	log : 
 		LOG_SNAKEMAKE("multi_scale_curv/{subject}_{substructure}.log")
@@ -310,6 +311,7 @@ rule compute_multiscale_mean_curvature_persistence :
 	shell : """
 	{MORPHO_ENV_PREFIX} python {params.script} \
 	--input {input.cropped_T1w} \
+	--tmp_folder {params.tmp_folder} \
 	--output_persistence {output.persistence_mean_curv} \
 	--output_thresholded {output.thresholded_persistence_mean_curv} \
 	--cerebellum_mask {input.corrected_mask_substructure} \
