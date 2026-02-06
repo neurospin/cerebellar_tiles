@@ -1,0 +1,58 @@
+# ------------------------------------------
+# Pipeline parameters
+# ------------------------------------------
+
+# Environement management
+execution : "local" #Local or tgcc
+
+environments :
+  module_tgcc : "morphologist/5.2" #Name of the moodule to load
+  pixi_env : "pixi.toml" #Path to toml manifest
+
+## Inputs
+subject_list : "path_to_file/subjects.txt" # Subject list file
+raw_data : "path_to_all_subjects" # Path of the raw data folder
+data_structure : "t1mri/ses_1" #Structure of the subject's folder to find nifti e.g. : sub-1234/ses-1/BL/.../sub-1234.nii.gz
+suffix_nifit : "ses-1" #Suffix of the nifti (difference with the subject folder's name e.g. : folder_name = sub-1234 and nifti_name sub-1234_ses-1.nii.gz)
+
+## Results
+output_folder : "path_to_save_results" #Automatically created
+
+## Logs
+logs : "path_to_save_logs" #To make (snakemake don't manage)
+
+## Dataset 
+dataset_name : "dataset_name" #Name of the dataset of raw data
+
+# ------------------------------------------
+# Pipeline parameters
+# ------------------------------------------
+
+## Dataset (computed by the pipeline)
+dataset :
+  name : "preprocessed_dataset" #Dataset name at the end of the pipeline
+  version : "0.0.0" # Version of the dataset
+
+## Acapulco parameters
+segmentation_params :
+  method : "kki"
+
+## Substructures' masks paths
+substructures_masks : #Can take a list of substructure's mask
+  vermis : "path_to_mask/vermis.nii.gz"
+  cerebellum : "path_to_mask/cerebellum.nii.gz"
+
+cerebellum_atlas_path_mask : "path_to_mask_cerebellum/mask_cerebellum.nii.gz"
+
+# Mask management
+dilatation_cerebellum_atlas_mask : 10 #voxels
+dilatation_substructure : 5 #voxels
+
+## Persistence settings : 
+
+sigmas : [0.5, 0.7, 1, 1.2, 1.5, 1.8, 2,2.3, 2.5, 2.8, 3] # Sigmas to use for the computation of multi-scale persistence
+
+#Quantile to retrieve for multi-scale persistence
+min_quantile : 0.01 
+max_quantile : 0.3
+threshold_persistence : 2 #Minimum count of band persistence for thresholding and retrieve skeleton
