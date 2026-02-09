@@ -69,6 +69,7 @@ MORPHO_ENV_PREFIX = morphologist_env()
 
 rule all:
 	input:
+		# Acapulco informations
 		expand(f"{OUTPUT_FOLDER}/{{subject}}/masks/{{subject}}_n4_affine.txt", subject = SUBJECTS),
 		expand(f"{OUTPUT_FOLDER}/{{subject}}/masks/{{subject}}_n4_inv-affine.txt", subject = SUBJECTS),
 		expand(f"{OUTPUT_FOLDER}/{{subject}}/masks/{{subject}}_n4_mni_seg_post.nii.gz", subject = SUBJECTS),
@@ -76,15 +77,21 @@ rule all:
 		expand(f"{OUTPUT_FOLDER}/{{subject}}/masks/{{subject}}_seg_acapulco_mni.nii.gz", subject = SUBJECTS),
 		expand(f"{OUTPUT_FOLDER}/{{subject}}/masks/{{subject}}_binary_acapulco_mni.nii.gz", subject = SUBJECTS),
 
+		# T1w MNI
 		expand(f"{OUTPUT_FOLDER}/{{subject}}/mni/{{subject}}_t1w_mni.nii.gz", subject = SUBJECTS),
 		
+		# Cropped MRI (to reduce computing time)
 		expand(f"{OUTPUT_FOLDER}/{{subject}}/bbox_cerebellum/{{subject}}_binary_acapulco_cropped.nii.gz", subject = SUBJECTS),
 		expand(f"{OUTPUT_FOLDER}/{{subject}}/bbox_cerebellum/{{subject}}_t1w_cropped.nii.gz", subject = SUBJECTS),
 		expand(f"{OUTPUT_FOLDER}/{{subject}}/bbox_cerebellum/{{subject}}_corrected_{{substructure}}_cropped.nii.gz", subject = SUBJECTS, substructure = SUBSTRUCTURES.keys()),
+		
+		# Persistence informations
 		expand(f"{OUTPUT_FOLDER}/{{subject}}/bbox_cerebellum/{{subject}}_{{substructure}}_persistence_band.nii.gz", subject = SUBJECTS, substructure = SUBSTRUCTURES.keys()),
 		expand(f"{OUTPUT_FOLDER}/{{subject}}/bbox_cerebellum/{{subject}}_{{substructure}}_thresh_persistence.nii.gz", subject = SUBJECTS, substructure = SUBSTRUCTURES.keys()),
 
+		# Masked persistence
 		expand(f"{OUTPUT_FOLDER}/{{subject}}/bbox_cerebellum/{{subject}}_{{substructure}}_masked_persistence.nii.gz", subject = SUBJECTS, substructure = SUBSTRUCTURES.keys()),
+		# Final volume
 		expand(f"{OUTPUT_FOLDER}/{{subject}}/{{subject}}_{{substructure}}_skeleton_cropped.nii.gz", subject = SUBJECTS, substructure = SUBSTRUCTURES.keys())
 
 
