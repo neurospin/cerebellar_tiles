@@ -20,6 +20,7 @@ output_folder : "path_to_save_results" #Automatically created
 
 ## Logs
 logs : "path_to_save_logs" #To make (snakemake don't manage)
+benchmark : "paths_to_benchmarks"
 
 ## Dataset 
 dataset_name : "dataset_name" #Name of the dataset of raw data

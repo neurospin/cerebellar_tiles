@@ -45,6 +45,7 @@ OUTPUT_FOLDER = config["output_folder"] # Output of the pipeline
 PLATFORM = config["execution"]
 SCRIPTS = lambda script : f"{workflow.basedir}/scripts/{script}"
 LOG_SNAKEMAKE = lambda log : f"{config['logs']}/{log}"
+BENCHMARK_SNAKEMAKE = lambda bench : f"{config['benchmark']}/{bench}"
 
 ## Retrieving subjects list
 with open(config["subject_list"]) as f : 
@@ -114,6 +115,9 @@ rule acapulco_segmentation :
 	log : 
 		LOG_SNAKEMAKE("acapulco_segmentation/{subject}.log")
 
+	benchmark:
+		BENCHMARK_SNAKEMAKE("acapulco_segmentation/{subject}.tsv")
+
 	shell : """
 	mkdir -p {output.output_directory}
 	acapulco.sh -i {input.raw_nifti} -o {output.output_directory} -m {params.method} > {log} 2>&1
@@ -137,6 +141,9 @@ rule copy_mask_and_transform :
 	log : 
 		LOG_SNAKEMAKE("copy_masks/{subject}.log")
 
+	benchmark:
+		BENCHMARK_SNAKEMAKE("copy_masks/{subject}.tsv")
+
 	shell : """
 	cp {input.acapulco_temp}/mni/{params.subject_name}_n4_affine.txt {output.masks[0]}
 	cp {input.acapulco_temp}/mni/{params.subject_name}_n4_inv-affine.txt {output.masks[1]}
@@ -159,6 +166,9 @@ rule resampling_mni_registration_t1w :
 	log : 
 		LOG_SNAKEMAKE("resampling_t1w/{subject}.log")
 
+	benchmark:
+		BENCHMARK_SNAKEMAKE("resampling_t1w/{subject}.tsv")
+
 	shell : """
 	{MORPHO_ENV_PREFIX} python {params.script} --acapulco --input {input.raw_nifti} --output {output.resampled_t1w_mni} --transform_mat {input.transf_matrix_acapulco} --verbose > {log} 2>&1
 	"""
@@ -178,6 +188,9 @@ rule resampling_mni_registration_acapulco_mask :
 	log : 
 		LOG_SNAKEMAKE("resampling_acapulco/{subject}.log")
 
+	benchmark:
+		BENCHMARK_SNAKEMAKE("resampling_acapulco/{subject}.tsv")
+
 	shell : """
 	{MORPHO_ENV_PREFIX} python {params.script} --acapulco --mask --input {input.mask_native} --output {output.resampled_mask_mni} --transform_mat {input.transf_matrix_acapulco} --verbose > {log} 2>&1
 	"""
@@ -194,6 +207,9 @@ rule binarisation_acapulco_mask :
 
 	log : 
 		LOG_SNAKEMAKE("binarisation_acapulco/{subject}.log")
+
+	benchmark:
+		BENCHMARK_SNAKEMAKE("binarisation_acapulco/{subject}.tsv")
 
 	shell : """
 	{MORPHO_ENV_PREFIX} python {params.script} --input {input.mask_acapulco} --output {output.binary_mask_acapulco} --verbose > {log} 2>&1
@@ -213,6 +229,9 @@ rule dilatation_mask_substructure :
 	log : 
 		LOG_SNAKEMAKE("dilatation_mask_sub/{substructure}.log")
 
+	benchmark:
+		BENCHMARK_SNAKEMAKE("dilatation_mask_sub/{substructure}.tsv")
+
 	shell : """
 	{MORPHO_ENV_PREFIX} python {params.script} --input {input.mask} --output {output} --dilatation {params.dilatation} --verbose > {log} 2>&1
 	"""
@@ -230,6 +249,9 @@ rule compute_bbox_cerebellum :
 	
 	log : 
 		LOG_SNAKEMAKE("cerebellum_bbox.log")
+
+	benchmark:
+		BENCHMARK_SNAKEMAKE("cerebellum_bbox.tsv")
 
 	shell : """
 	{MORPHO_ENV_PREFIX} python {params.script} --input {input.mask_cerebellum} --output {output} --dilatation {params.dilatation_cerebellum_mask} --verbose > {log} 2>&1
@@ -249,6 +271,9 @@ rule apply_cerebellum_bbox_mask_acapulco :
 	log : 
 		LOG_SNAKEMAKE("bbox_1_acapulco/{subject}.log")
 
+	benchmark:
+		BENCHMARK_SNAKEMAKE("bbox_1_acapulco/{subject}.tsv")
+
 	shell : """
 	{MORPHO_ENV_PREFIX} python {params.script} --bbox_npy {input.bbox_cerebellum} --input {input.mask_acapulco} --output {output} --verbose > {log} 2>&1
 	"""
@@ -266,6 +291,9 @@ rule apply_cerebellum_bbox_mask_t1w :
 	
 	log : 
 		LOG_SNAKEMAKE("bbox_1_t1w/{subject}.log")
+
+	benchmark:
+		BENCHMARK_SNAKEMAKE("bbox_1_t1w/{subject}.tsv")
 
 	shell : """
 	{MORPHO_ENV_PREFIX} python {params.script} --bbox_npy {input.bbox_cerebellum} --input {input.mask_t1w} --output {output} --verbose > {log} 2>&1
@@ -285,6 +313,9 @@ rule apply_cerebellum_bbox_mask_substructure :
 	log : 
 		LOG_SNAKEMAKE("bbox_1_substruct/{substructure}.log")
 
+	benchmark:
+		BENCHMARK_SNAKEMAKE("bbox_1_substruct/{substructure}.tsv")
+
 	shell : """
 	{MORPHO_ENV_PREFIX} python {params.script} --bbox_npy {input.bbox_cerebellum} --input {input.mask_substructure} --output {output} --verbose > {log} 2>&1
 	"""
@@ -302,6 +333,9 @@ rule fusion_acapulco_substructures_mask :
 	
 	log : 
 		LOG_SNAKEMAKE("fusion_mask/{subject}_{substructure}.log")
+
+	benchmark:
+		BENCHMARK_SNAKEMAKE("fusion_mask/{subject}_{substructure}.tsv")
 
 	shell : """
 	{MORPHO_ENV_PREFIX} python {params.script} --mask_1 {input.mask_substructure} --mask_2 {input.mask_acapulco} --output {output} --verbose > {log} 2>&1
@@ -326,6 +360,9 @@ rule compute_multiscale_mean_curvature_persistence :
 	
 	log : 
 		LOG_SNAKEMAKE("multi_scale_curv/{subject}_{substructure}.log")
+
+	benchmark:
+		BENCHMARK_SNAKEMAKE("multi_scale_curv/{subject}_{substructure}.tsv")
 
 	shell : """
 	{MORPHO_ENV_PREFIX} python {params.script} \
@@ -355,6 +392,9 @@ rule apply_mask_corrected_substructure :
 	log : 
 		LOG_SNAKEMAKE("apply_mask_sub/{subject}_{substructure}.log")
 
+	benchmark:
+		BENCHMARK_SNAKEMAKE("apply_mask_sub/{subject}_{substructure}.tsv")
+
 	shell : """
 	{MORPHO_ENV_PREFIX} python {params.script} --input {input.thresholded_persistence_mean_curv} --mask {input.corrected_mask_substructure} --output {output} --verbose > {log} 2>&1
 	"""
@@ -371,6 +411,9 @@ rule compute_bbox_substructure :
 	
 	log : 
 		LOG_SNAKEMAKE("compute_bbox_substruct/{substructure}.log")
+
+	benchmark:
+		BENCHMARK_SNAKEMAKE("compute_bbox_substruct/{substructure}.tsv")
 
 	shell : """
 	{MORPHO_ENV_PREFIX} python {params.script} --input {input.dilated_mask_substructure} --output {output} --dilatation 0 --verbose > {log} 2>&1
@@ -389,6 +432,9 @@ rule apply_bbox_substructure :
 
 	log : 
 		LOG_SNAKEMAKE("bbox_2/{subject}_{substructure}.log")
+
+	benchmark:
+		BENCHMARK_SNAKEMAKE("bbox_2/{subject}_{substructure}.tsv")
 
 	shell : """
 	{MORPHO_ENV_PREFIX} python {params.script} --input {input.masked_persistence} --output {output.cropped_substructure} --bbox_npy {input.substructure_bbox} --verbose > {log} 2>&1
