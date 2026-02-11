@@ -42,6 +42,7 @@ def parse_sigma(list_sigma):
 # 0. Parsing arguments
 parser = argparse.ArgumentParser()
 parser.add_argument("-v", "--verbose", action="store_true", help="Verbose mode")
+parser.add_argument("--clean_files", action="store_true", help="Clean mean curvature files (and associated files)")
 parser.add_argument("--input", required=True, help="Input nifti path")
 parser.add_argument("--tmp_folder", required=True, help="Temporary folder to keep files")
 parser.add_argument("--output_persistence", required=True, help="Persistence nifti saving path")
@@ -52,7 +53,6 @@ parser.add_argument("--min_quantile", required=True, help="Minimum quantile", ty
 parser.add_argument("--max_quantile", required=True, help="Maximum quantile", type=float)
 parser.add_argument("--sigmas", required=True, nargs="+", type=float, help="List of sigmas used for the multi-scale mean curvature computation")
 args = parser.parse_args()
-
 
 # Retrieving each sigmas
 mapping_sigma = parse_sigma(args.sigmas)
@@ -140,9 +140,10 @@ save_numpy_nifti(persis_band, args.output_persistence, header=header_input)
 save_numpy_nifti(thresholded_persistence_band, args.output_thresholded, header=header_input)
 
 # Cleaning files
-for sigma, path_end in mapping_sigma.items() : 
-    sub_name = Path(args.input).stem
-    mask_name = Path(args.cerebellum_mask).stem
-    full_path = mean_curvature_path(subject = sub_name, mask =mask_name, suffix = path_end, folder = args.tmp_folder)
-    os.remove(full_path)
-    os.remove(full_path + ".minf")
+if args.clean_files :
+    for sigma, path_end in mapping_sigma.items() :
+        sub_name = Path(args.input).stem
+        mask_name = Path(args.cerebellum_mask).stem
+        full_path = mean_curvature_path(subject = sub_name, mask =mask_name, suffix = path_end, folder = args.tmp_folder)
+        os.remove(full_path)
+        os.remove(full_path + ".minf")

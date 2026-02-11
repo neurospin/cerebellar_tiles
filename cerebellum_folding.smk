@@ -375,6 +375,7 @@ rule compute_multiscale_mean_curvature_persistence :
 	--min_quantile {params.min_quantile} \
 	--max_quantile {params.max_quantile} \
 	--sigmas {params.sigmas} \
+	--clean_files \
 	--verbose > {log} 2>&1
 	"""
 
