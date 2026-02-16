@@ -42,7 +42,8 @@ def parse_sigma(list_sigma):
 # 0. Parsing arguments
 parser = argparse.ArgumentParser()
 parser.add_argument("-v", "--verbose", action="store_true", help="Verbose mode")
-parser.add_argument("--clean_files", action="store_true", help="Clean mean curvature files (and associated files)")
+parser.add_argument("--save_mc", action="store_true", help="Save mean curvature files (and associated files)")
+parser.add_argument("--save_bands", action="store_true", help="Save mean curvature bands files (and associated files)")
 parser.add_argument("--input", required=True, help="Input nifti path")
 parser.add_argument("--tmp_folder", required=True, help="Temporary folder to keep files")
 parser.add_argument("--output_persistence", required=True, help="Persistence nifti saving path")
@@ -74,9 +75,14 @@ if args.verbose :
 def mean_curvature_path(subject : str, mask : str,  suffix : str, folder : str):
     return f"{folder}/{subject}_{mask}_mean_curvature_{suffix}.nii.gz"
 
+def band_path(subject : str, mask : str,  suffix : str, folder : str, min_quant : float = args.min_quantile, max_quant : float = args.max_quantile):
+    subject_name = subject.split("_")[0]
+    return f"{folder}/{subject_name}/{subject_name}_{mask}_band_{min_quant}_{max_quant}_{suffix}.nii.gz"
+
 dict_mean_curv = dict()
 for sigma, path_end in mapping_sigma.items() : 
-    sub_name = Path(args.input).stem
+    sub_name = Path(args.input).stem # Remove gz
+    sub_name = Path(sub_name).stem # Remove nii
     mask_name = Path(args.cerebellum_mask).stem
     full_path = mean_curvature_path(subject = sub_name, mask =mask_name, suffix = path_end, folder = args.tmp_folder)
     if args.verbose :
@@ -140,10 +146,26 @@ save_numpy_nifti(persis_band, args.output_persistence, header=header_input)
 save_numpy_nifti(thresholded_persistence_band, args.output_thresholded, header=header_input)
 
 # Cleaning files
-if args.clean_files :
+if not args.save_mc :
+    if args.verbose : 
+        print("Cleaning mean curvature files")
     for sigma, path_end in mapping_sigma.items() :
-        sub_name = Path(args.input).stem
+        sub_name = Path(args.input).stem # Remove gz
+        sub_name = Path(sub_name).stem # Remove nii
         mask_name = Path(args.cerebellum_mask).stem
         full_path = mean_curvature_path(subject = sub_name, mask =mask_name, suffix = path_end, folder = args.tmp_folder)
         os.remove(full_path)
         os.remove(full_path + ".minf")
+
+# Cleaning files
+if args.save_bands :
+    if args.verbose : 
+        print("Saving bands")
+    for sigma, path_end in mapping_sigma.items() :
+        sub_name = Path(args.input).stem # Remove gz
+        sub_name = Path(sub_name).stem # Remove nii
+        mask_name = Path(args.cerebellum_mask).stem
+        full_path = band_path(subject = sub_name, mask =mask_name, suffix = path_end, folder = args.tmp_folder)
+        if args.verbose : 
+            print("Band saved at : {full_path}")
+        save_numpy_nifti(dict_band[sigma], full_path, header_input)
