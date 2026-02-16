@@ -17,7 +17,7 @@ For instance, the pipeline runs on Morphologist 5.2 (`soma 5.2.0`), and Acapulco
 
 ```
 .
-├── cerebellum_folding.smk
+├── cerebellar_tiles.smk
 ├── config.yaml
 ├── containers
 │   ├── acapulco-cpu.sif
@@ -33,7 +33,7 @@ For instance, the pipeline runs on Morphologist 5.2 (`soma 5.2.0`), and Acapulco
 ```
 
 Explanation for the different files and folders : 
-- `cerebellum_folding.smk` : Snakemake file that contains all the rules for the pipeline to be run.
+- `cerebellar_tiles.smk` : Snakemake file that contains all the rules for the pipeline to be run.
 - `config.yaml` : Configuration file for the different rules
 - `containers` : Contains the different container logic.
 - `envs` : Environements management
@@ -51,6 +51,6 @@ The steps to run the pipeline are the following ones :
 1. Prepare `config.yaml` file with you options (environements managements, parameters, paths, ...)
 2. Run the command :
 ```
-snakemake -s cerebellum_folding.smk --configfile <your_config> -j <number_jobs_max> --use-apptainer --apptainer-args "--bind <paths_necessary_to_access_data> --home $PWD"
+snakemake -s cerebellar_tiles.smk --configfile <your_config> -j <number_jobs_max> --use-apptainer --apptainer-args "--bind <paths_necessary_to_access_data> --home $PWD"
 ```
 
