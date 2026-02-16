@@ -1,0 +1,153 @@
+{
+    "__default__" :
+    {
+        "jobname"   : "{rule}.{wildcards}",
+        "outname"   : "logs/smk/slurm/{rule}_{wildcards}_%j.out",
+        "errname"   : "logs/smk/slurm/{rule}_{wildcards}_%j.err",
+        "threads"   : "1",
+        "tasks"     : "1",
+        "memory"    : "",
+        "account"   : "gen13800",
+        "partition" : "rome",
+        "qos"       : "",
+        "time"      : "86400",
+        "email"     : "",
+        "extra"     : "",
+        "extra_msub": "-m workflash,store,scratch"
+    },
+    "acapulco_segmentation" :
+    {
+        "tasks"     : "1",
+        "threads"   : "2",
+        "time"      : "600",
+        "memory"    : "1781",
+        "extra"     : "",
+        "extra_msub": "-m workflash,store,scratch"
+    },
+    "copy_mask_and_transform" :
+    {
+        "tasks"     : "1",
+        "threads"   : "1",
+        "time"      : "600",
+        "memory"    : "1781",
+        "extra"     : "",
+        "extra_msub": "-m workflash,store,scratch"
+    },
+    "resampling_mni_registration_t1w" :
+    {
+        "tasks"     : "1",
+        "threads"   : "1",
+        "time"      : "600",
+        "memory"    : "1781",
+        "extra"     : "",
+        "extra_msub": "-m workflash,store,scratch"
+    },
+    "resampling_mni_registration_acapulco_mask" :
+    {
+        "tasks"     : "1",
+        "threads"   : "1",
+        "time"      : "600",
+        "memory"    : "1781",
+        "extra"     : "",
+        "extra_msub": "-m workflash,store,scratch"
+    },
+    "binarisation_acapulco_mask" :
+    {
+        "tasks"     : "1",
+        "threads"   : "1",
+        "time"      : "600",
+        "memory"    : "1781",
+        "extra"     : "",
+        "extra_msub": "-m workflash,store,scratch"
+    },
+    "dilatation_mask_substructure" :
+    {
+        "tasks"     : "1",
+        "threads"   : "1",
+        "time"      : "600",
+        "memory"    : "1781",
+        "extra"     : "",
+        "extra_msub": "-m workflash,store,scratch"
+    },
+    "compute_bbox_cerebellum" :
+    {
+        "tasks"     : "1",
+        "threads"   : "1",
+        "time"      : "600",
+        "memory"    : "1781",
+        "extra"     : "",
+        "extra_msub": "-m workflash,store,scratch"
+    },
+    "apply_cerebellum_bbox_mask_acapulco" :
+    {
+        "tasks"     : "1",
+        "threads"   : "1",
+        "time"      : "600",
+        "memory"    : "1781",
+        "extra"     : "",
+        "extra_msub": "-m workflash,store,scratch"
+    },
+    "apply_cerebellum_bbox_mask_t1w" :
+    {
+        "tasks"     : "1",
+        "threads"   : "1",
+        "time"      : "600",
+        "memory"    : "1781",
+        "extra"     : "",
+        "extra_msub": "-m workflash,store,scratch"
+    },
+    "apply_cerebellum_bbox_mask_substructure" :
+    {
+        "tasks"     : "1",
+        "threads"   : "1",
+        "time"      : "600",
+        "memory"    : "1781",
+        "extra"     : "",
+        "extra_msub": "-m workflash,store,scratch"
+    },
+    "fusion_acapulco_substructures_mask" :
+    {
+        "tasks"     : "1",
+        "threads"   : "1",
+        "time"      : "600",
+        "memory"    : "1781",
+        "extra"     : "",
+        "extra_msub": "-m workflash,store,scratch"
+    },
+    "compute_multiscale_mean_curvature_persistence" :
+    {
+        "tasks"     : "1",
+        "threads"   : "1",
+        "time"      : "600",
+        "memory"    : "1781",
+        "extra"     : "",
+        "extra_msub": "-m workflash,store,scratch"
+    },
+    "apply_mask_corrected_substructure" :
+    {
+        "tasks"     : "1",
+        "threads"   : "1",
+        "time"      : "600",
+        "memory"    : "1781",
+        "extra"     : "",
+        "extra_msub": "-m workflash,store,scratch"
+    },
+    "compute_bbox_substructure" :
+    {
+        "tasks"     : "1",
+        "threads"   : "1",
+        "time"      : "600",
+        "memory"    : "1781",
+        "extra"     : "",
+        "extra_msub": "-m workflash,store,scratch"
+    },
+    "apply_bbox_substructure" :
+    {
+        "tasks"     : "1",
+        "threads"   : "1",
+        "time"      : "600",
+        "memory"    : "1781",
+        "extra"     : "",
+        "extra_msub": "-m workflash,store,scratch"
+    }
+}
