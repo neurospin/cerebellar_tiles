@@ -15,8 +15,7 @@ echo "${HOSTNAME}"
 #  Environments basic softwares
 
 module switch dfldatadir/n4h00001
-# module load ig
-module load snakemake/6.15.5
+module load snakemake/9.14.0
 
 snakemake --version
 
