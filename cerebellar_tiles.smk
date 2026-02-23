@@ -58,7 +58,7 @@ SUBSTRUCTURES = config["substructures_masks"]
 
 def morphologist_env() :
 	if PLATFORM == "tgcc" :
-		return f"module load {config['environments']['module_tgcc']} &&"
+		return f"module unload snakemake && module load {config['environments']['module_tgcc']} &&"
 	else :
 		return f"pixi run --manifest-path {config['environments']['pixi_env']}"
 
@@ -100,28 +100,11 @@ rule all:
 #  All the rules
 # ----------------------------------------------
 
+if PLATFORM == "tgcc" :
+	include : f"{workflow.basedir}/rules/acapulco_segmentation_tgcc.smk"
+else : #Local 
+	include : f"{workflow.basedir}/rules/acapulco_segmentation_local.smk"
 
-rule acapulco_segmentation :
-	container : "containers/acapulco-cpu.sif"
-	input :
-		raw_nifti = lambda wildcards : RAW_DATA(wildcards.subject)
-
-	output :
-		output_directory = temp(directory(f"{OUTPUT_FOLDER}/{{subject}}/acapulco")),
-
-	params :
-		method = config["segmentation_params"]["method"]
-	
-	log : 
-		LOG_SNAKEMAKE("acapulco_segmentation/{subject}.log")
-
-	benchmark:
-		BENCHMARK_SNAKEMAKE("acapulco_segmentation/{subject}.tsv")
-
-	shell : """
-	mkdir -p {output.output_directory}
-	acapulco.sh -i {input.raw_nifti} -o {output.output_directory} -m {params.method} > {log} 2>&1
-	"""
 
 rule copy_mask_and_transform :
 	input :

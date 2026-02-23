@@ -22,7 +22,6 @@ For instance, the pipeline runs on Morphologist 5.2 (`soma 5.2.0`), and Acapulco
 ├── containers
 │   ├── acapulco-cpu.sif
 │   └── acapulco-gpu.sif
-├── envs
 ├── logs
 ├── profiles
 ├── README.md
@@ -35,13 +34,12 @@ For instance, the pipeline runs on Morphologist 5.2 (`soma 5.2.0`), and Acapulco
 Explanation for the different files and folders : 
 - `cerebellar_tiles.smk` : Snakemake file that contains all the rules for the pipeline to be run.
 - `config.yaml` : Configuration file for the different rules
-- `containers` : Contains the different container logic.
-- `envs` : Environements management
-- `logs` : Folder to save log files
-- `inputs` : Folder containing raw nifti
-- `results` : Folder to save the main results
-- `scripts` : Contains all the different scripts
-- `subject.txt` : txt file containing all the subjects' ID that need to be processed by the pipeline
+- `containers` : Contains the different container logic. 
+- `logs` : Folder to save log files (CHANGED IN config.yaml) 
+- `inputs` : Folder containing raw nifti (CHANGED IN config.yaml)
+- `results` : Folder to save the main results (CHANGED IN config.yaml)
+- `scripts` : Contains all the different scripts 
+- `subject.txt` : txt file containing all the subjects' ID that need to be processed by the pipeline (CHANGED IN config.yaml)
 
 ## How to run the pipeline :
 
@@ -49,8 +47,19 @@ This pipeline needs snakemake to run (installation via bioconda).
 
 The steps to run the pipeline are the following ones : 
 1. Prepare `config.yaml` file with you options (environements managements, parameters, paths, ...)
-2. Run the command :
+2. 
+
+- Run the command locally :
 ```
-snakemake -s cerebellar_tiles.smk --configfile <your_config> -j <number_jobs_max> --use-apptainer --apptainer-args "--bind <paths_necessary_to_access_data> --home $PWD"
+snakemake -s cerebellum_folding.smk --configfile <your_config> -j <number_jobs_max> --use-apptainer --apptainer-args "--bind <paths_necessary_to_access_data>"
 ```
+
+- Run the command on a HPC (like TGCC)
+
+```
+snakemake -s cerebellum_folding.smk --configfile <your_config> -j <number_jobs_max> --profile profiles/<your_custom_profile>
+```
+
+**NB** The `acapulco_segmentation` rule might have to be change according to the container policy of your HPC (how jobs using containers are managed). For example on TGCC, the containers are managed by the `pcocc-rs` command.
+
 
