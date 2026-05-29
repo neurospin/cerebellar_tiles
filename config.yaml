@@ -49,11 +49,22 @@ cerebellum_atlas_path_mask : "path_to_mask_cerebellum/mask_cerebellum.nii.gz"
 dilatation_cerebellum_atlas_mask : 10 #voxels
 dilatation_substructure : 5 #voxels
 
-## Persistence settings : 
+## Hessian-based extraction settings :
 
-sigmas : [0.5, 0.7, 1, 1.2, 1.5, 1.8, 2,2.3, 2.5, 2.8, 3] # Sigmas to use for the computation of multi-scale persistence
+# Computation of the eigen values
+sigmas : [0.5, 0.6, 0.7, 0.8, 0.9, 1.0] # Sigmas to use for the computation of multi-scale persistence
 
-#Quantile to retrieve for multi-scale persistence
-min_quantile : 0.01 
-max_quantile : 0.3
-threshold_persistence : 2 #Minimum count of band persistence for thresholding and retrieve skeleton
+# Computation of the sheetness and normalisation
+
+alpha : 2
+beta : 100
+
+# Z-score normalisation
+
+window_size : 5 #mm
+
+# Hysteresis settings
+
+# Percentile for hysteresis thresholding
+min_percentile : 50
+max_percentile : 95
