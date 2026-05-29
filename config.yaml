@@ -22,7 +22,7 @@ output_folder : "path_to_save_results" #Automatically created
 logs : "path_to_save_logs" #To make (snakemake don't manage)
 benchmark : "paths_to_benchmarks"
 
-## Dataset 
+## Dataset
 dataset_name : "dataset_name" #Name of the dataset of raw data
 
 # ------------------------------------------
@@ -49,22 +49,44 @@ cerebellum_atlas_path_mask : "path_to_mask_cerebellum/mask_cerebellum.nii.gz"
 dilatation_cerebellum_atlas_mask : 10 #voxels
 dilatation_substructure : 5 #voxels
 
-## Hessian-based extraction settings :
+## Hessian-based extraction settings
 
-# Computation of the eigen values
-sigmas : [0.5, 0.6, 0.7, 0.8, 0.9, 1.0] # Sigmas to use for the computation of multi-scale persistence
+# WM-peak intensity normalisation (target value to which the WM histogram peak is rescaled)
+target_wm_value : 1000.0
 
-# Computation of the sheetness and normalisation
+# Per-sigma Hessian
+sigmas : [0.5, 0.6, 0.7, 0.8, 0.9, 1.0] # Sigmas (mm) used for multiscale Hessian sheetness
 
-alpha : 2
-beta : 100
+# Sheetness filter (per-scale)
+alpha : 2     # R-term scale parameter (R = |lambda_1| / |lambda_3|)
+beta : 100    # S-term scale parameter (S = Frobenius norm of Hessian); per-dataset tuning lever
 
-# Z-score normalisation
+# Multiscale gamma-normalisation : per-sigma response scaled by sigma**gamma_power before aggregation.
+# Current scripts use gamma_power=1 (linear in sigma). Set higher (e.g. 2) for stronger coarse-scale weighting.
+gamma_power : 1.0
 
-window_size : 5 #mm
+# Z-score normalisation (local box filter on the max-aggregated sheetness)
+window_size : 5 #mm — FAS7 working point
 
-# Hysteresis settings
+# Hysteresis (percentiles computed in cerebellum mask)
+min_percentile : 50    # p_low  — FAS7 working point
+max_percentile : 95    # p_high — FAS7 working point
 
-# Percentile for hysteresis thresholding
-min_percentile : 50
-max_percentile : 95
+# ------------------------------------------
+# Intermediate / diagnostic flags
+# ------------------------------------------
+
+# When true (default), per-sigma intermediates (eigvals npy, raw sheetness, gamma-normalised sheetness)
+# are wrapped in Snakemake's temp() and deleted after the chain consumes them.
+# Set to false to keep all per-sigma volumes on disk for QC / multiscale-argmax-style inspection.
+cleanup_intermediates : true
+
+# When true (default), keep the multiscale-argmax volume from aggregation_argmax (which sigma won where).
+# Diagnostic from 2026-05-18 Run 11 work.
+keep_argmax_diagnostic : true
+
+# Optional script-level "save intermediate" flags. All default false to keep disk small.
+save_normalisation_stats : false      # normalisation_intensity.py --save_stats (WM-peak, scale, etc. dumped to txt)
+save_eigvals_nifti : false            # compute_eigvals.py --save_eigvals (lambda1/2/3 as .nii.gz, for visualisation)
+save_sheetness_intermediates : false  # compute_sheetness.py --save_intermediate (R, S, R_norm, struct_norm volumes)
+save_z_score_intermediates : false    # z-score_normalisation.py --save_intermediate (local mean, std volumes)
