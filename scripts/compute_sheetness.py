@@ -90,7 +90,7 @@ if args.save_intermediate :
     to_save = [R, R_norm,S, struct_norm]
     for file_name, file in zip(saving_names, to_save):
         file_aims = aims.Volume(file)
-        file_aims.copyHeaderFrom(header_template)
+        file_aims.copyHeaderFrom(header_template.header())
         aims.write(file_aims, file_name)
 
 sheetness_output_file = f"{args.output}/{subject_name}_sheetness_sigma{sigma}_alpha{args.alpha}_beta{args.beta}.nii.gz"
@@ -98,5 +98,5 @@ if args.verbose :
     print(f"Saving sheetness at {sheetness_output_file}")
 
 sheetness_aims = aims.Volume(sheet)
-sheetness_aims.copyHeaderFrom(header_template)
+sheetness_aims.copyHeaderFrom(header_template.header())
 aims.write(sheetness_aims, sheetness_output_file)

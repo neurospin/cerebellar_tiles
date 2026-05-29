@@ -2,27 +2,12 @@ from soma import aims
 import numpy as np
 import logging
 import argparse
-import os
 from pathlib import Path
 import re
 
-# Parsing args
-
-parser = argparse.ArgumentParser()
-
-parser.add_argument("-v", "--verbose", action="count", default=0, help="Verbose mode : -v for INFO and -vv for DEBUG")
-parser.add_argument("-i", "--input", required=True, help="Input folder containing the sheetness values")
-parser.add_argument("-o", "--output", required=True, help="Output folder for gamma normalised sheetness values")
-
-args = parser.parse_args()
-
-## Logging parameters 
-
-level = logging.WARNING - 10 * args.verbose
-logging.basicConfig(level=level, format="%(levelname)s:%(message)s")
-logger = logging.getLogger(__name__)
-
-#Retrieving files for gamma normalisation
+# Refactored 2026-05-29 — per-sigma file I/O for Snakemake compatibility.
+# Old script parsed a whole folder; this version takes one input file and writes one output file.
+# Sigma is parsed from the input filename (matches compute_sheetness.py naming).
 
 REGEX_SHEET = re.compile(
     r"^(?P<subject>.+?)"
@@ -33,63 +18,68 @@ REGEX_SHEET = re.compile(
     r"\.nii\.gz$"
 )
 
-input_folder = Path(args.input)
-output_folder = Path(args.output)
+# Parsing args
+parser = argparse.ArgumentParser(
+    description="Gamma-normalise a per-sigma sheetness volume by sigma**gamma_power."
+)
+parser.add_argument("-v", "--verbose", action="count", default=0,
+                    help="Verbose mode : -v for INFO, -vv for DEBUG")
+parser.add_argument("-i", "--input", required=True,
+                    help="Input per-sigma sheetness nifti "
+                         "(naming: <subject>_sheetness_sigma<sigma>_alpha<a>_beta<b>.nii.gz)")
+parser.add_argument("-o", "--output", required=True,
+                    help="Output per-sigma gamma-normalised sheetness nifti")
+parser.add_argument("--gamma_power", type=float, default=1.0,
+                    help="Exponent applied to sigma. Multiplier = sigma**gamma_power. "
+                         "Default 1.0 reproduces the original `sigma * volume` behaviour.")
 
-logger.debug("Input folder : %s", input_folder)
-logger.debug("Output folder : %s", output_folder)
+args = parser.parse_args()
 
-# Parsing folder
+# Logging setup
+level = logging.WARNING - 10 * args.verbose
+logging.basicConfig(level=level, format="%(levelname)s:%(message)s")
+logger = logging.getLogger(__name__)
 
-logger.info("\n _____ Parsing sheetness files _____ \n")
-params_list = list()
-subjects = set()
-for file_name in os.listdir(input_folder):
-    if os.path.isdir(file_name):
-        continue
-    match = REGEX_SHEET.match(file_name)
-    if match : 
-        dict_sub = match.groupdict().copy()
-        sub_name = dict_sub["subject"]
-        subjects.add(sub_name)
-        dict_sub["path_file"] = input_folder / file_name
-        # fixing types
-        dict_sub["sigma"] = float(dict_sub["sigma"])
-        dict_sub["alpha"] = int(dict_sub["alpha"])
-        dict_sub["beta"] = int(dict_sub["beta"])
-        params_list.append(dict_sub)
-    else :
-        continue
+input_path = Path(args.input)
+output_path = Path(args.output)
 
-logger.info("Found %d files", len(params_list))
-logger.debug("Parsed information : \n %s", params_list)
-if len(subjects) > 1 :
-    logger.warning("Multiple subjects in the input folder %s", subjects)
+logger.debug("Input  : %s", input_path)
+logger.debug("Output : %s", output_path)
 
-logger.info("\n _____ Sigma Normalisation of values _____ \n")
+# Parse sigma from filename
+match = REGEX_SHEET.match(input_path.name)
+if not match:
+    raise ValueError(
+        f"Input filename '{input_path.name}' does not match expected pattern "
+        f"<subject>_sheetness_sigma<sigma>_alpha<a>_beta<b>.nii.gz"
+    )
 
-for dict_sub in params_list :
-    sub = dict_sub["subject"]
-    sigma = dict_sub["sigma"]
-    logger.info("\nNormalisation of %s for sigma : %d", sub, sigma)
-    path_file = str(dict_sub["path_file"])
-    logger.debug("Parameters \n Path : %s \n Sigma: %f \n Alpha : %d \n  Beta : %d",
-                 path_file,
-                 sigma,
-                 dict_sub["alpha"],
-                 dict_sub["beta"])
+groupdict = match.groupdict()
+subject = groupdict["subject"]
+sigma = float(groupdict["sigma"])
 
-    volume = aims.read(path_file)
-    header_input = volume.header()
-    vol_np = np.squeeze(volume.np.copy())
-    logger.debug("File read, shape : %s", vol_np.shape)
-    vol_np_normalised = sigma* vol_np
-    logger.debug("Subject : %s normalised for sigma %s", sub, sigma)
-    norm_aims = aims.Volume(vol_np_normalised)
-    logger.debug("Header file to copy: %s", header_input )
-    norm_aims.copyHeaderFrom(header_input)
-    output_file = output_folder / f"{sub}_sheetness_norm_sigma{sigma}.nii.gz"
-    logger.debug("Saving file at : %s", output_file)
-    aims.write(norm_aims, str(output_file))
+logger.info(" _____ Sigma Normalisation _____ ")
+logger.info("Subject     : %s", subject)
+logger.info("Sigma       : %s", sigma)
+logger.info("Gamma power : %s", args.gamma_power)
 
-logger.info("Finished folder normalisation !")
+# Read, scale, write
+volume = aims.read(str(input_path))
+header_input = volume.header()
+vol_np = np.squeeze(volume.np.copy())
+
+multiplier = sigma ** args.gamma_power
+logger.debug("Multiplicative factor (sigma**gamma_power) : %s", multiplier)
+
+vol_np_normalised = (multiplier * vol_np).astype(np.float32)
+
+logger.debug("Output shape : %s", vol_np_normalised.shape)
+
+norm_aims = aims.Volume(vol_np_normalised)
+norm_aims.copyHeaderFrom(header_input)
+norm_aims.header()["sigma_gamma_normalisation"] = sigma
+norm_aims.header()["gamma_power"] = args.gamma_power
+
+aims.write(norm_aims, str(output_path))
+
+logger.info("Saved gamma-normalised volume to %s", output_path)

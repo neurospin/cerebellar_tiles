@@ -4,7 +4,11 @@ import numpy as np
 from skimage.feature import hessian_matrix, hessian_matrix_eigvals
 from pathlib import Path
 
-# Parsing args
+# Refactored 2026-05-29 — no longer writes the per-subject header .hdr.
+# Downstream (compute_sheetness) now reads the header directly from the input volume
+# the eigvals were computed on (the WM-peak-normalised cropped T1w), which avoids the
+# stale-header side-effect when multiple sigma rules run in parallel writing to a
+# shared folder.
 
 parser = argparse.ArgumentParser()
 
@@ -18,13 +22,12 @@ args = parser.parse_args()
 
 # Retrieving volume
 
-
 input_path = Path(args.input)
 output_path = Path(args.output)
 split_basename = input_path.name.split("_")
 subject_name = split_basename[0]
 
-if args.verbose : 
+if args.verbose :
     print("\n _____________ COMPUTING EIGENVALUES _____________ \n")
     print(f"Input path : {args.input}")
     print(f"Input subject name : {subject_name}")
@@ -34,7 +37,7 @@ header_template = volume.header()
 
 vol_np = np.squeeze(volume.np.copy()) # To retrieve a 3D image (removing the time dimension)
 
-if args.verbose : 
+if args.verbose :
     print(f"Sigma used: {args.sigma}")
 
 spacing = list(volume.header()["voxel_size"])
@@ -64,7 +67,7 @@ if args.sort_eigvals :
     print("Sorting eigenvalue by raw values")
     eigvals = np.sort(eigvals, axis=0)
 
-if args.save_eigvals : 
+if args.save_eigvals :
     if args.verbose :
         print(f"Saving eigenvalues with sorting = {args.sort_eigvals}")
         print(f"Saving at {output_path}")
@@ -75,17 +78,8 @@ if args.save_eigvals :
         l_i_aims.copyHeaderFrom(header_template)
         aims.write(l_i_aims, saving_path)
 
-header_path = f"{output_path}/{subject_name}_header_t1w_cropped.hdr"
-
-if args.verbose : 
-    print(f"Saving header at {header_path}")
-
-aims.write(header_template, header_path)
-
 numpy_eigvals_path = f"{output_path}/{subject_name}_eigvals_raw_sigma{args.sigma}" if not args.sort_eigvals else f"{output_path}/{subject_name}_eigvals_sorted_sigma{sigma}"
-if args.verbose : 
+if args.verbose :
     print(f"Saving npy file at {numpy_eigvals_path}")
 
 np.save(numpy_eigvals_path,eigvals)
-
-
