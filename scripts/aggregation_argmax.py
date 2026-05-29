@@ -4,25 +4,12 @@ import numpy as np
 import logging
 import argparse
 import re
-import os
 
-# Parse arguments
-
-parser = argparse.ArgumentParser()
-
-parser.add_argument("-v", "--verbose", action="count", default=0, help="Verbose mode : -v for INFO. -vv for DEBUG")
-parser.add_argument("-i", "--input", required=True, help="Input folder containing normalised sheetness files")
-parser.add_argument("-o", "--output", required=True, help="Output folder")
-
-args=parser.parse_args()
-
-# Logger set
-
-level = logging.WARNING - 10 * args.verbose
-logging.basicConfig(level=level, format="%(levelname)s: %(message)s")
-logger = logging.getLogger(__name__)
-
-## Parsing folder
+# Refactored 2026-05-29 — explicit file-list I/O for Snakemake compatibility.
+# Old script parsed a folder via regex. This version takes an explicit list of per-sigma
+# files (--inputs), and writes the max and argmax aggregated volumes to explicit paths.
+# Sigmas are parsed from filenames and the input list is sorted by sigma before stacking,
+# so the argmax indices line up with config["sigmas"] sorted ascending.
 
 REGEX_PATTERN = re.compile(
     r"^(?P<subject>.+?)"
@@ -31,87 +18,96 @@ REGEX_PATTERN = re.compile(
     r"\.nii\.gz$"
 )
 
-input_path = Path(args.input)
-output_path = Path(args.output)
 
-logger.debug("Input folder : %s", input_path)
-logger.debug("Output folder : %s", output_path)
+def parse_inputs(input_paths):
+    """Return list of (sigma, subject, Path) tuples sorted by ascending sigma. Errors on subject mismatch."""
+    parsed = []
+    subjects = set()
+    for path in input_paths:
+        path = Path(path)
+        match = REGEX_PATTERN.match(path.name)
+        if not match:
+            raise ValueError(
+                f"Input filename '{path.name}' does not match expected pattern "
+                f"<subject>_sheetness_norm_sigma<sigma>.nii.gz"
+            )
+        groupdict = match.groupdict()
+        subjects.add(groupdict["subject"])
+        if len(subjects) > 1:
+            raise ValueError(f"Mixed subjects in input list : {subjects}")
+        parsed.append((float(groupdict["sigma"]), groupdict["subject"], path))
+    return sorted(parsed, key=lambda t: t[0])
 
-# Parsing folder
 
-logger.info("\n ____ Parsing folder _____")
+# Parse arguments
+parser = argparse.ArgumentParser(
+    description="Stack per-sigma normalised sheetness volumes and emit max + argmax."
+)
+parser.add_argument("-v", "--verbose", action="count", default=0,
+                    help="Verbose mode : -v for INFO, -vv for DEBUG")
+parser.add_argument("--inputs", required=True, nargs="+",
+                    help="Per-sigma gamma-normalised sheetness files "
+                         "(naming: <subject>_sheetness_norm_sigma<sigma>.nii.gz)")
+parser.add_argument("--output_max", required=True,
+                    help="Output path for the voxel-wise max aggregation across sigmas")
+parser.add_argument("--output_argmax", required=True,
+                    help="Output path for the voxel-wise argmax aggregation across sigmas "
+                         "(indices align with input sigmas sorted ascending)")
 
-subject_set = set() # Ensure that we are working with only one subject
-list_path = list()
-list_sigmas = list()
-logger.debug("Files in input path %s", os.listdir(input_path))
-for file_name in os.listdir(input_path): 
-    if os.path.isdir(file_name):
-        continue
-    match = REGEX_PATTERN.match(file_name)
-    if match : 
-        groupdict=match.groupdict()
-        subject_set.add(groupdict["subject"])
-        if len(subject_set) > 1 :
-            raise ValueError(f"Multiple subjects in the folder ! Got : {subject_set}")
-        file_path = input_path / file_name
-        list_path.append(file_path)
-        list_sigmas.append(float(groupdict["sigma"]))
+args = parser.parse_args()
 
-sorted_ind = np.argsort(list_sigmas)
-array_sigmas = np.array(list_sigmas)[sorted_ind]
-array_path = np.array(list_path)[sorted_ind]
+level = logging.WARNING - 10 * args.verbose
+logging.basicConfig(level=level, format="%(levelname)s: %(message)s")
+logger = logging.getLogger(__name__)
 
-logger.info("Found %d normalisation in the folder", len(array_path))
-logger.debug("List of paths : %s", array_path)
+# Parse and sort by sigma
+parsed = parse_inputs(args.inputs)
+sigmas_sorted = [t[0] for t in parsed]
+subject = parsed[0][1]
+paths_sorted = [t[2] for t in parsed]
 
-# Aggregation of the files
+logger.info(" ____ Aggregation ____ ")
+logger.info("Subject : %s", subject)
+logger.info("Sigmas  : %s", sigmas_sorted)
+logger.info("Number of files : %d", len(paths_sorted))
 
-logger.info("\n ____ Aggregation files ____ \n")
-
-np_list = list()
-
+# Read and stack
 logger.info("Reading files...")
-for ind,path in enumerate(array_path): 
-    sigma = array_sigmas[ind]
-    logger.debug("Reading file %s, sigma parsed : %d:2f", path, sigma)
+np_list = []
+header_template = None
+for ind, path in enumerate(paths_sorted):
+    logger.debug("Reading file %s (sigma=%s)", path, sigmas_sorted[ind])
     volume = aims.read(str(path))
-    if ind==0 :
+    if ind == 0:
         header_template = volume.header()
     vol_np = volume.np.copy()
     np_list.append(vol_np)
 
-logger.info("Aggregating...")
+logger.info("Stacking and aggregating...")
 
 stacked = np.stack(np_list)
 argmax_vol = np.argmax(stacked, axis=0)
 max_vol = np.max(stacked, axis=0)
-repartition_maxs = list(np.unique(argmax_vol))
 
 logger.debug("Aggregated volume shape : %s", argmax_vol.shape)
-logger.debug("Unique values : %s", repartition_maxs)
+logger.debug("Unique argmax values   : %s", list(np.unique(argmax_vol)))
 
-logger.info("Aggregated ! Saving files... ")
-
-header_template["sigmas_aggregation"] = array_sigmas
+# Save
+header_template["sigmas_aggregation"] = sigmas_sorted
 
 max_agg_aims = aims.Volume(max_vol.astype(np.float32))
 argmax_agg_aims = aims.Volume(argmax_vol.astype(np.float32))
 
-logger.debug("Header used for output file : \n %s", header_template)
-
 max_agg_aims.copyHeaderFrom(header_template)
 argmax_agg_aims.copyHeaderFrom(header_template)
 
-subject = subject_set.pop()
+output_max_path = Path(args.output_max)
+output_argmax_path = Path(args.output_argmax)
 
-output_max_path = output_path / f"{subject}_aggregation_max.nii.gz"
-output_argmax_path = output_path / f"{subject}_aggregation_argmax.nii.gz"
-
-logger.debug("Max vol saved at : %s", output_max_path)
-logger.debug("Argmax vol saved at : %s", output_argmax_path)
+logger.debug("Max vol    -> %s", output_max_path)
+logger.debug("Argmax vol -> %s", output_argmax_path)
 
 aims.write(max_agg_aims, str(output_max_path))
 aims.write(argmax_agg_aims, str(output_argmax_path))
 
-logger.info("Aggregated volume saved !")
+logger.info("Aggregated volumes saved !")
