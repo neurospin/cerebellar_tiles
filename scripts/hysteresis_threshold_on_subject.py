@@ -5,7 +5,7 @@ from skimage.filters import apply_hysteresis_threshold
 import logging
 import argparse
 
-def set_border_zero(vol_np): 
+def set_border_zero(vol_np):
     vol_np[0,:,:] = 0
     vol_np[-1,:,:] = 0
 
