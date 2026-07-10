@@ -45,7 +45,7 @@ rule resampling_mni_registration_t1w :
 		transf_matrix_acapulco = f"{OUTPUT_FOLDER}/{{subject}}/masks/{{subject}}_n4_affine.txt"
 
 	output :
-		resampled_t1w_mni = temp(f"{OUTPUT_FOLDER}/{{subject}}/mni/{{subject}}_t1w_mni.nii.gz")
+		resampled_t1w_mni = maybe_temp(f"{OUTPUT_FOLDER}/{{subject}}/mni/{{subject}}_t1w_mni.nii.gz")
 
 	params :
 		script = SCRIPTS("resampling.py")
