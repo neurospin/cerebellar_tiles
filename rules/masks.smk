@@ -148,7 +148,7 @@ rule compute_bbox_cerebellum :
 	"""
 
 
-rule apply_cerebellum_bbox_mask_acapulco :
+rule apply_cerebellum_bbox_bin_mask_acapulco :
 	input :
 		mask_acapulco = f"{OUTPUT_FOLDER}/{{subject}}/masks/{{subject}}_binary_acapulco_mni.nii.gz",
 		bbox_cerebellum = f"{OUTPUT_FOLDER}/common/bbox_cerebellum_atlas.npy"
@@ -160,10 +160,32 @@ rule apply_cerebellum_bbox_mask_acapulco :
 		script = SCRIPTS("apply_bounding_box.py")
 
 	log :
-		LOG_SNAKEMAKE("bbox_1_acapulco/{subject}.log")
+		LOG_SNAKEMAKE("bbox_1_bin_acapulco/{subject}.log")
 
 	benchmark:
-		BENCHMARK_SNAKEMAKE("bbox_1_acapulco/{subject}.tsv")
+		BENCHMARK_SNAKEMAKE("bbox_1_bin_acapulco/{subject}.tsv")
+
+	shell : """
+	{MORPHO_ENV_PREFIX} python {params.script} --bbox_npy {input.bbox_cerebellum} --input {input.mask_acapulco} --output {output} --verbose > {log} 2>&1
+	"""
+
+
+rule apply_cerebellum_bbox_mask_acapulco :
+	input :
+		mask_acapulco = f"{OUTPUT_FOLDER}/{{subject}}/masks/{{subject}}_seg_acapulco_mni.nii.gz",
+		bbox_cerebellum = f"{OUTPUT_FOLDER}/common/bbox_cerebellum_atlas.npy"
+
+	output :
+		f"{OUTPUT_FOLDER}/{{subject}}/bbox_cerebellum/{{subject}}_seg_acapulco_cropped.nii.gz"
+
+	params :
+		script = SCRIPTS("apply_bounding_box.py")
+
+	log :
+		LOG_SNAKEMAKE("bbox_1_seg_acapulco/{subject}.log")
+
+	benchmark:
+		BENCHMARK_SNAKEMAKE("bbox_1_seg_acapulco/{subject}.tsv")
 
 	shell : """
 	{MORPHO_ENV_PREFIX} python {params.script} --bbox_npy {input.bbox_cerebellum} --input {input.mask_acapulco} --output {output} --verbose > {log} 2>&1

@@ -86,6 +86,7 @@ rule all:
 
 		# Cropped T1w (kept as anchor so the cropping path always builds)
 		expand(f"{OUTPUT_FOLDER}/{{subject}}/bbox_cerebellum/{{subject}}_t1w_cropped.nii.gz", subject = SUBJECTS),
+		expand(f"{OUTPUT_FOLDER}/{{subject}}/bbox_cerebellum/{{subject}}_seg_acapulco_cropped.nii.gz", subject = SUBJECTS),
 
 		# Per-substructure fusion masks (cropped)
 		expand(f"{OUTPUT_FOLDER}/{{subject}}/bbox_cerebellum/{{subject}}_corrected_{{substructure}}_cropped.nii.gz", subject = SUBJECTS, substructure = SUBSTRUCTURES.keys()),
