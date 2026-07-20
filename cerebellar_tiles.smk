@@ -59,9 +59,6 @@ SIGMAS = config["sigmas"]
 def maybe_temp(path):
 	return temp(path) if config.get("cleanup_intermediates", True) else path
 
-# Argmax diagnostic flag (preserves the multiscale-argmax volume from aggregation_argmax)
-KEEP_ARGMAX = config.get("keep_argmax_diagnostic", True)
-
 # To adapt the environment to the machine we execute it on (TGCC or local)
 
 def morphologist_env() :
@@ -94,8 +91,6 @@ rule all:
 		# Final foliation binary, cropped to substructure bbox
 		expand(f"{OUTPUT_FOLDER}/{{subject}}/{{subject}}_{{substructure}}_foliation_binary_cropped.nii.gz", subject = SUBJECTS, substructure = SUBSTRUCTURES.keys()),
 
-		# Optional multiscale-argmax diagnostic (one volume per subject)
-		*([expand(f"{OUTPUT_FOLDER}/{{subject}}/bbox_cerebellum/{{subject}}_aggregation_argmax.nii.gz", subject = SUBJECTS)] if KEEP_ARGMAX else []),
 
 
 # ----------------------------------------------

@@ -81,10 +81,6 @@ max_percentile : 95    # p_high — FAS7 working point
 # Set to false to keep all per-sigma volumes on disk for QC / multiscale-argmax-style inspection.
 cleanup_intermediates : true
 
-# When true (default), keep the multiscale-argmax volume from aggregation_argmax (which sigma won where).
-# Diagnostic from 2026-05-18 Run 11 work.
-keep_argmax_diagnostic : true
-
 # Optional script-level "save intermediate" flags. All default false to keep disk small.
 save_normalisation_stats : false      # normalisation_intensity.py --save_stats (WM-peak, scale, etc. dumped to txt)
 save_eigvals_nifti : false            # compute_eigvals.py --save_eigvals (lambda1/2/3 as .nii.gz, for visualisation)
