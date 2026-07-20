@@ -43,6 +43,11 @@ substructures_masks : #Can take a list of substructure's mask
   vermis : "path_to_mask/vermis.nii.gz"
   cerebellum : "path_to_mask/cerebellum.nii.gz"
 
+# Substructures to PRE-BAKE as ready z-score+binary tiles in the .npz (subset of the keys above).
+# Any other substructure is still extractable on-the-fly in the dataloader from the bundled
+# Acapulco `labels` map, so keep this short — only structures you hit constantly (e.g. vermis).
+prebaked_tiles : [vermis]
+
 cerebellum_atlas_path_mask : "path_to_mask_cerebellum/mask_cerebellum.nii.gz"
 
 # Mask management

@@ -27,6 +27,7 @@ onerror:
 # ----------------------------------------------
 
 import yaml
+import json
 
 # Global parameters
 RAW_PATH = config["raw_data"] # Raw data path (root of the file; e.g. folder/<subject_folder>/...)
@@ -91,6 +92,11 @@ rule all:
 		# Final foliation binary, cropped to substructure bbox
 		expand(f"{OUTPUT_FOLDER}/{{subject}}/{{subject}}_{{substructure}}_foliation_binary_cropped.nii.gz", subject = SUBJECTS, substructure = SUBSTRUCTURES.keys()),
 
+		# Pre-baked substructure z-score tiles (parallel to the binary tiles above)
+		expand(f"{OUTPUT_FOLDER}/{{subject}}/{{subject}}_{{substructure}}_zscore_cropped.nii.gz", subject = SUBJECTS, substructure = config.get("prebaked_tiles", [])),
+
+		# DL bundle: one .npz per subject (whole-cerebellum zscore+binary+labels, + pre-baked tiles)
+		expand(f"{OUTPUT_FOLDER}/{{subject}}/{{subject}}_tiles.npz", subject = SUBJECTS),
 
 
 # ----------------------------------------------
@@ -104,3 +110,4 @@ else : #Local
 
 include : f"{workflow.basedir}/rules/masks.smk"
 include : f"{workflow.basedir}/rules/foliation_hessian.smk"
+include : f"{workflow.basedir}/rules/packaging.smk"
