@@ -98,6 +98,10 @@ rule all:
 		# DL bundle: one .npz per subject (whole-cerebellum zscore+binary+labels, + pre-baked tiles)
 		expand(f"{OUTPUT_FOLDER}/{{subject}}/{{subject}}_tiles.npz", subject = SUBJECTS),
 
+		# Dataset-level QC manifest + qc table (gathers per-subject validity checks)
+		f"{OUTPUT_FOLDER}/manifest.json",
+		f"{OUTPUT_FOLDER}/qc.csv",
+
 
 # ----------------------------------------------
 #  Rule includes
@@ -111,3 +115,4 @@ else : #Local
 include : f"{workflow.basedir}/rules/masks.smk"
 include : f"{workflow.basedir}/rules/foliation_hessian.smk"
 include : f"{workflow.basedir}/rules/packaging.smk"
+include : f"{workflow.basedir}/rules/qc.smk"
