@@ -25,7 +25,7 @@ if args.verbose :
     print(f"Masking {args.input} with mask from {args.mask}...")
 
 masked_vol = volume.np * mask.np
-output_aims = aims.Volume(masked_vol.astype(np.int16))
+output_aims = aims.Volume(masked_vol.astype(volume.np.dtype))
 output_aims.copyHeaderFrom(header_template)
 
 if args.verbose :

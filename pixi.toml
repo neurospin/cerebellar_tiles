@@ -9,3 +9,5 @@ version = "0.1.0"
 
 [dependencies]
 morphologist = ">=6.0.5,<7"
+scikit-image = ">=0.26.0,<0.27"
+scipy = ">=1.17.1,<2"

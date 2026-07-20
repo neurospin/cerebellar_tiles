@@ -62,4 +62,6 @@ snakemake -s cerebellum_folding.smk --configfile <your_config> -j <number_jobs_m
 
 **NB** The `acapulco_segmentation` rule might have to be change according to the container policy of your HPC (how jobs using containers are managed). For example on TGCC, the containers are managed by the `pcocc-rs` command.
 
+# TODO
 
+- Acapulco isn't able to compute an accurate reverse transformation (MNI -> Native), the rest of the pipeline is impacted
