@@ -16,6 +16,28 @@ onsuccess:
     print("+++++++++++++++++++++++++++++++++++++++++")
     print("+++++ Workflow successfully ended. ++++++")
     print("+++++++++++++++++++++++++++++++++++++++++")
+    # aims writes a `<file>.minf` sidecar next to every volume; Snakemake's temp() does not
+    # track it, so it is orphaned when its data file is temp-removed. When cleanup_intermediates
+    # is on, sweep orphan .minf sidecars (data file gone) then prune the empty dirs they leave.
+    if config.get("cleanup_intermediates", True):
+        import os
+        removed_minf = 0
+        for root, _, files in os.walk(OUTPUT_FOLDER):
+            for fn in files:
+                if fn.endswith(".minf") and not os.path.exists(os.path.join(root, fn[:-len(".minf")])):
+                    os.remove(os.path.join(root, fn))
+                    removed_minf += 1
+        pruned = 0
+        for root, _, _ in os.walk(OUTPUT_FOLDER, topdown=False):
+            if os.path.abspath(root) == os.path.abspath(OUTPUT_FOLDER):
+                continue
+            try:
+                if not os.listdir(root):
+                    os.rmdir(root)
+                    pruned += 1
+            except OSError:
+                pass
+        print(f"[cleanup] removed {removed_minf} orphan .minf sidecar(s), pruned {pruned} empty dir(s)")
 
 onerror:
     print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~")

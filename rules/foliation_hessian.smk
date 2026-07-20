@@ -34,7 +34,7 @@ rule wm_peak_normalisation :
 		cerebellum_mask = f"{OUTPUT_FOLDER}/{{subject}}/bbox_cerebellum/{{subject}}_binary_acapulco_cropped.nii.gz"
 
 	output :
-		normalised_t1w = f"{OUTPUT_FOLDER}/{{subject}}/sheetness/{{subject}}_t1w_cropped_wm_norm.nii.gz"
+		normalised_t1w = maybe_temp(f"{OUTPUT_FOLDER}/{{subject}}/sheetness/{{subject}}_t1w_cropped_wm_norm.nii.gz")
 
 	params :
 		script = SCRIPTS("normalisation_intensity.py"),
@@ -164,8 +164,8 @@ rule aggregation_argmax :
 		)
 
 	output :
-		max_vol = f"{OUTPUT_FOLDER}/{{subject}}/bbox_cerebellum/{{subject}}_aggregation_max.nii.gz",
-		argmax_vol = f"{OUTPUT_FOLDER}/{{subject}}/bbox_cerebellum/{{subject}}_aggregation_argmax.nii.gz"
+		max_vol = maybe_temp(f"{OUTPUT_FOLDER}/{{subject}}/bbox_cerebellum/{{subject}}_aggregation_max.nii.gz"),
+		argmax_vol = maybe_temp(f"{OUTPUT_FOLDER}/{{subject}}/bbox_cerebellum/{{subject}}_aggregation_argmax.nii.gz")
 
 	params :
 		script = SCRIPTS("aggregation_argmax.py")
