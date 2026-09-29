@@ -9,6 +9,13 @@
 # lists it in the manifest so it can be excluded from the DL dataset downstream.
 ################################################
 
+# Run in the snakemake process rather than as cluster jobs. freeze_config is a `run:`
+# directive (trivial, and `run:` needs snakemake inside the job); gather_manifest is a
+# single cross-subject aggregation. Neither is worth a flux submission + status poll,
+# and keeping gather_manifest off the cluster also keeps it out of any rule group.
+localrules : freeze_config, gather_manifest
+
+
 rule freeze_config :
 	output :
 		f"{OUTPUT_FOLDER}/config_snapshot.json"
@@ -18,6 +25,7 @@ rule freeze_config :
 
 
 rule qc_subject :
+	group : "subject_post"
 	input :
 		raw = lambda wildcards : RAW_DATA(wildcards.subject),
 		cerebellum_mask = f"{OUTPUT_FOLDER}/{{subject}}/bbox_cerebellum/{{subject}}_binary_acapulco_cropped.nii.gz",

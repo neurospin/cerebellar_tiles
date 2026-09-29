@@ -29,6 +29,7 @@ wildcard_constraints :
 # -----------------------------------------------
 
 rule wm_peak_normalisation :
+	group : "subject_post"
 	input :
 		t1w_cropped = f"{OUTPUT_FOLDER}/{{subject}}/bbox_cerebellum/{{subject}}_t1w_cropped.nii.gz",
 		cerebellum_mask = f"{OUTPUT_FOLDER}/{{subject}}/bbox_cerebellum/{{subject}}_binary_acapulco_cropped.nii.gz"
@@ -63,6 +64,7 @@ rule wm_peak_normalisation :
 # -----------------------------------------------
 
 rule compute_eigvals :
+	group : "subject_post"
 	input :
 		normalised_t1w = f"{OUTPUT_FOLDER}/{{subject}}/sheetness/{{subject}}_t1w_cropped_wm_norm.nii.gz"
 
@@ -93,6 +95,7 @@ rule compute_eigvals :
 
 
 rule compute_sheetness :
+	group : "subject_post"
 	input :
 		eigvals_npy = f"{OUTPUT_FOLDER}/{{subject}}/sheetness/eigvals/sigma{{sigma}}/{{subject}}_eigvals_sorted_sigma{{sigma}}.npy",
 		header_volume = f"{OUTPUT_FOLDER}/{{subject}}/sheetness/{{subject}}_t1w_cropped_wm_norm.nii.gz"
@@ -127,6 +130,7 @@ rule compute_sheetness :
 
 
 rule gamma_normalisation :
+	group : "subject_post"
 	input :
 		sheetness = f"{OUTPUT_FOLDER}/{{subject}}/sheetness/raw/sigma{{sigma}}/{{subject}}_sheetness_sigma{{sigma}}_alpha{config['alpha']}_beta{config['beta']}.nii.gz"
 
@@ -157,6 +161,7 @@ rule gamma_normalisation :
 # -----------------------------------------------
 
 rule aggregation_argmax :
+	group : "subject_post"
 	input :
 		per_sigma = lambda wildcards : expand(
 			f"{OUTPUT_FOLDER}/{wildcards.subject}/sheetness/normalised/{wildcards.subject}_sheetness_norm_sigma{{sigma}}.nii.gz",
@@ -190,6 +195,7 @@ rule aggregation_argmax :
 # -----------------------------------------------
 
 rule z_score_normalisation :
+	group : "subject_post"
 	input :
 		max_vol = f"{OUTPUT_FOLDER}/{{subject}}/bbox_cerebellum/{{subject}}_aggregation_max.nii.gz",
 		cerebellum_mask = f"{OUTPUT_FOLDER}/{{subject}}/bbox_cerebellum/{{subject}}_binary_acapulco_cropped.nii.gz"
@@ -221,6 +227,7 @@ rule z_score_normalisation :
 
 
 rule hysteresis_threshold :
+	group : "subject_post"
 	input :
 		z_score = f"{OUTPUT_FOLDER}/{{subject}}/sheetness/{{subject}}_local_z_score_sheetness_filter{config['window_size']}mm.nii.gz",
 		cerebellum_mask = f"{OUTPUT_FOLDER}/{{subject}}/bbox_cerebellum/{{subject}}_binary_acapulco_cropped.nii.gz"
@@ -255,6 +262,7 @@ rule hysteresis_threshold :
 # -----------------------------------------------
 
 rule apply_mask_substructure :
+	group : "subject_post"
 	input :
 		binary = f"{OUTPUT_FOLDER}/{{subject}}/sheetness/{{subject}}_foliation_binary.nii.gz",
 		corrected_mask_substructure = f"{OUTPUT_FOLDER}/{{subject}}/bbox_cerebellum/{{subject}}_corrected_{{substructure}}_cropped.nii.gz"
@@ -281,6 +289,7 @@ rule apply_mask_substructure :
 
 
 rule apply_bbox_substructure :
+	group : "subject_post"
 	input :
 		substructure_bbox = f"{OUTPUT_FOLDER}/common/{{substructure}}_bbox.npy",
 		masked_binary = f"{OUTPUT_FOLDER}/{{subject}}/bbox_cerebellum/{{subject}}_{{substructure}}_foliation_binary_masked.nii.gz"
