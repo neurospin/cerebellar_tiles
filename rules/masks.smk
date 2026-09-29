@@ -11,6 +11,7 @@
 ################################################
 
 rule copy_mask_and_transform :
+	group : "subject_post"
 	input :
 		acapulco_temp = f"{OUTPUT_FOLDER}/{{subject}}/acapulco"
 
@@ -40,6 +41,7 @@ rule copy_mask_and_transform :
 
 
 rule resampling_mni_registration_t1w :
+	group : "subject_post"
 	input :
 		raw_nifti = lambda wildcards : RAW_DATA(wildcards.subject),
 		transf_matrix_acapulco = f"{OUTPUT_FOLDER}/{{subject}}/masks/{{subject}}_n4_affine.txt"
@@ -62,6 +64,7 @@ rule resampling_mni_registration_t1w :
 
 
 rule resampling_mni_registration_acapulco_mask :
+	group : "subject_post"
 	input :
 		mask_native = f"{OUTPUT_FOLDER}/{{subject}}/masks/{{subject}}_n4_mni_seg_post_inverse.nii.gz",
 		transf_matrix_acapulco = f"{OUTPUT_FOLDER}/{{subject}}/masks/{{subject}}_n4_affine.txt"
@@ -84,6 +87,7 @@ rule resampling_mni_registration_acapulco_mask :
 
 
 rule binarisation_acapulco_mask :
+	group : "subject_post"
 	input :
 		mask_acapulco = f"{OUTPUT_FOLDER}/{{subject}}/masks/{{subject}}_seg_acapulco_mni.nii.gz"
 
@@ -149,6 +153,7 @@ rule compute_bbox_cerebellum :
 
 
 rule apply_cerebellum_bbox_bin_mask_acapulco :
+	group : "subject_post"
 	input :
 		mask_acapulco = f"{OUTPUT_FOLDER}/{{subject}}/masks/{{subject}}_binary_acapulco_mni.nii.gz",
 		bbox_cerebellum = f"{OUTPUT_FOLDER}/common/bbox_cerebellum_atlas.npy"
@@ -171,6 +176,7 @@ rule apply_cerebellum_bbox_bin_mask_acapulco :
 
 
 rule apply_cerebellum_bbox_mask_acapulco :
+	group : "subject_post"
 	input :
 		mask_acapulco = f"{OUTPUT_FOLDER}/{{subject}}/masks/{{subject}}_seg_acapulco_mni.nii.gz",
 		bbox_cerebellum = f"{OUTPUT_FOLDER}/common/bbox_cerebellum_atlas.npy"
@@ -193,6 +199,7 @@ rule apply_cerebellum_bbox_mask_acapulco :
 
 
 rule apply_cerebellum_bbox_mask_t1w :
+	group : "subject_post"
 	input :
 		mask_t1w = f"{OUTPUT_FOLDER}/{{subject}}/mni/{{subject}}_t1w_mni.nii.gz",
 		bbox_cerebellum = f"{OUTPUT_FOLDER}/common/bbox_cerebellum_atlas.npy"
@@ -237,6 +244,7 @@ rule apply_cerebellum_bbox_mask_substructure :
 
 
 rule fusion_acapulco_substructures_mask :
+	group : "subject_post"
 	input :
 		mask_substructure = f"{OUTPUT_FOLDER}/common/{{substructure}}_mask_cropped.nii.gz",
 		mask_acapulco = f"{OUTPUT_FOLDER}/{{subject}}/bbox_cerebellum/{{subject}}_binary_acapulco_cropped.nii.gz"

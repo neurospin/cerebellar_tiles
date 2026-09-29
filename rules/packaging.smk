@@ -20,6 +20,7 @@ PREBAKED_TILES = config.get("prebaked_tiles", [])
 # -----------------------------------------------
 
 rule apply_mask_substructure_zscore :
+	group : "subject_post"
 	input :
 		z_score = f"{OUTPUT_FOLDER}/{{subject}}/sheetness/{{subject}}_local_z_score_sheetness_filter{config['window_size']}mm.nii.gz",
 		corrected_mask_substructure = f"{OUTPUT_FOLDER}/{{subject}}/bbox_cerebellum/{{subject}}_corrected_{{substructure}}_cropped.nii.gz"
@@ -46,6 +47,7 @@ rule apply_mask_substructure_zscore :
 
 
 rule apply_bbox_substructure_zscore :
+	group : "subject_post"
 	input :
 		substructure_bbox = f"{OUTPUT_FOLDER}/common/{{substructure}}_bbox.npy",
 		masked_zscore = f"{OUTPUT_FOLDER}/{{subject}}/bbox_cerebellum/{{subject}}_{{substructure}}_zscore_masked.nii.gz"
@@ -76,6 +78,7 @@ rule apply_bbox_substructure_zscore :
 # -----------------------------------------------
 
 rule package_npz :
+	group : "subject_post"
 	input :
 		zscore = f"{OUTPUT_FOLDER}/{{subject}}/sheetness/{{subject}}_local_z_score_sheetness_filter{config['window_size']}mm.nii.gz",
 		binary = f"{OUTPUT_FOLDER}/{{subject}}/sheetness/{{subject}}_foliation_binary.nii.gz",

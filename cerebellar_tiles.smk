@@ -86,6 +86,9 @@ def maybe_temp(path):
 
 def morphologist_env() :
 	if PLATFORM == "tgcc" :
+		activate = config["environments"].get("activate_tgcc")
+		if activate :
+			return f"source {activate} &&"
 		return f"module unload snakemake && module load {config['environments']['module_tgcc']} &&"
 	else :
 		return f"pixi run --manifest-path {config['environments']['pixi_env']}"
