@@ -5,7 +5,7 @@ import numpy as np
 from scipy.ndimage import gaussian_filter
 from scipy.signal import find_peaks
 
-# Refactored 2026-05-29 — target_wm_value exposed via --target_wm (was hardcoded 1000.0).
+# target_wm_value is set with --target_wm (config `target_wm_value`; script default 1000.0).
 
 def get_wm_peak(image, brain_mask, n_bins=512):
     """

@@ -1,7 +1,7 @@
 ################################################
 # Hessian-based foliation extraction
 #
-# Chain (locked 2026-05-26 — Run 11 Strand A endorsed pipeline) :
+# Chain (fixed working point; parameters in config.yaml) :
 #   wm_peak_normalisation
 #     -> compute_eigvals (per sigma)
 #     -> compute_sheetness (per sigma)
@@ -14,8 +14,8 @@
 #
 # Substructure axis enters only at the final two rules. z-score and
 # hysteresis run on the full cropped cerebellum mask so the percentile
-# base is stable across substructures (matches the FAS7 working point
-# `(5 mm / 50-95)` as tuned on the cerebellum).
+# base is stable across substructures (the default 5 mm window and
+# 50-95 percentiles were tuned on the whole cerebellum).
 ################################################
 
 wildcard_constraints :

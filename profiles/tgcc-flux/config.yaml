@@ -29,7 +29,7 @@ executor: cluster-generic
 # allocation is already fixed by the sub_file, so those resources (which
 # tgcc_submit.py consumes) have no meaning on this route.
 #
-# NO `--setattr=system.duration` (removed 2026-07-28). It was fed
+# NO `--setattr=system.duration`. It would be fed
 # {resources.runtime}, which Snakemake DERIVES for a group job from its members.
 # The per-subject group is ~15 topological layers deep, so that value comes out
 # either as a sum (~9000 s -> flux may park or refuse the job once the
@@ -64,7 +64,7 @@ cluster-generic-cancel-cmd: flux cancel
 # Phase 3 (production, -N 8 = 1024 cores): jobs = 112.
 # Do NOT also pass --jobs on the command line: the CLI value overrides this.
 #
-# 2026-07-28: two job shapes now coexist in one invocation.
+# Two job shapes coexist in one invocation.
 #   acapulco_segmentation : 9 cores  -> 2048/9 = 227 concurrent
 #   group "subject_post"  : ~6 cores -> 2048/6 = 341 concurrent
 #     (6 = the widest layer of the per-subject sub-DAG, the sigma fan-out;

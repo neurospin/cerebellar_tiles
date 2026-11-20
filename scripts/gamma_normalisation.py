@@ -5,7 +5,7 @@ import argparse
 from pathlib import Path
 import re
 
-# Refactored 2026-05-29 — per-sigma file I/O for Snakemake compatibility.
+# Per-sigma file I/O for Snakemake compatibility.
 # Old script parsed a whole folder; this version takes one input file and writes one output file.
 # Sigma is parsed from the input filename (matches compute_sheetness.py naming).
 

@@ -4,7 +4,7 @@ import numpy as np
 from skimage.feature import hessian_matrix, hessian_matrix_eigvals
 from pathlib import Path
 
-# Refactored 2026-05-29 — no longer writes the per-subject header .hdr.
+# Does not write a per-subject header .hdr.
 # Downstream (compute_sheetness) now reads the header directly from the input volume
 # the eigvals were computed on (the WM-peak-normalised cropped T1w), which avoids the
 # stale-header side-effect when multiple sigma rules run in parallel writing to a

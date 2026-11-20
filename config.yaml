@@ -71,11 +71,11 @@ beta : 100    # S-term scale parameter (S = Frobenius norm of Hessian); per-data
 gamma_power : 1.0
 
 # Z-score normalisation (local box filter on the max-aggregated sheetness)
-window_size : 5 #mm — FAS7 working point
+window_size : 5 #mm
 
 # Hysteresis (percentiles computed in cerebellum mask)
-min_percentile : 50    # p_low  — FAS7 working point
-max_percentile : 95    # p_high — FAS7 working point
+min_percentile : 50    # p_low
+max_percentile : 95    # p_high
 
 # ------------------------------------------
 # Intermediate / diagnostic flags

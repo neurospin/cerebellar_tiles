@@ -5,7 +5,7 @@ import logging
 import argparse
 import re
 
-# Refactored 2026-05-29 — explicit file-list I/O for Snakemake compatibility.
+# Explicit file-list I/O for Snakemake compatibility.
 # Old script parsed a folder via regex. This version takes an explicit list of per-sigma
 # files (--inputs), and writes the max and argmax aggregated volumes to explicit paths.
 # Sigmas are parsed from filenames and the input list is sorted by sigma before stacking,

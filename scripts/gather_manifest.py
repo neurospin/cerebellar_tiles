@@ -6,7 +6,7 @@
 # - snapshots the frozen working point from config, provenance (git, env), and QC summary
 # - writes manifest.json (the dataset card) and qc.csv (one row per subject)
 #
-# Lives with the DATA (outside the vault), so subject IDs here are fine.
+# Written next to the data: it lists subject IDs, keep it out of public places.
 ################################################
 
 import argparse
@@ -102,8 +102,8 @@ def main():
             "dilatation_cerebellum": cfg.get("dilatation_cerebellum_atlas_mask"),
             "dilatation_substructure": cfg.get("dilatation_substructure"),
             "prebaked_tiles": cfg.get("prebaked_tiles", []),
-            "space": "MNI152-ICBM2009c 0.5mm iso (dec-002)",
-            "eigenvalue_sort": "raw value, signs preserved (dec-008)",
+            "space": "MNI152-ICBM2009c 0.5mm iso, rigid registration",
+            "eigenvalue_sort": "raw value, signs preserved",
             "vermis_definition": "atlas-ROI intersect whole-cerebellum-Acapulco, masked (DL input); "
                                  "lobule labels bundled for stats only",
         },
@@ -119,9 +119,9 @@ def main():
             "mad_k": args.mad_k,
         },
         "caveats": [
-            "Not bias-corrected; cohorts arrive in heterogeneous bias states (q-023).",
+            "No bias-field correction in the pipeline; inputs keep their own bias state.",
             "Acapulco lobule labels are error-prone -> stats only, not input masking.",
-            "Output is NOT field/site-invariant in magnitude across cohorts (Run 16).",
+            "Sheetness magnitude is not invariant to field strength or site; compare cohorts with care.",
         ],
         "subjects": subs,
     }

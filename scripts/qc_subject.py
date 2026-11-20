@@ -2,7 +2,7 @@
 # Per-subject validity QC. Writes one {subject}_qc.json.
 #
 # Absolute sanity checks (flag here):
-#   - header split (sform vs qform) on the RAW ingestion input   -> the Run 12 / HCP-class bug
+#   - header split (sform vs qform) on the raw input (a split header misplaces the MNI registration)
 #   - foliation binary empty / NaN-inf in the z-score field
 #   - tile shape recorded (cross-subject consistency checked at gather time)
 #   - npz loads and has the expected keys
@@ -73,7 +73,7 @@ def main():
 
     qc = {"subject": args.subject, "flags": []}
 
-    # --- header split (cause of the Run 12 / HCP bug) ---
+    # --- header split (sform / qform disagree: misplaced registration) ---
     try:
         sc, qc_code, so, qo = read_nifti_forms(args.raw)
         delta = float(np.max(np.abs(np.array(so) - np.array(qo)))) if qc_code > 0 and sc > 0 else 0.0

@@ -9,7 +9,7 @@
 # `flux jobs` is a python CLI (~0.5-0.8s startup), and cluster-generic checks
 # active jobs SERIALLY, so one sweep over N jobs cost N x ~1.5s. That capped
 # in-flight jobs at N ~= T_job / 1.5s ~= 12 for the cheap downstream rules
-# (measured: job 5290272, 2026-07-27, busy_cores 5-15 with 2040 free).
+# (measured: busy_cores 5-15 with 2040 free).
 #
 # HOW: a single `flux jobs -a` snapshot is refreshed at most once per TTL and
 # shared by every check. Per-check cost drops to an awk over a tmpfs file.
